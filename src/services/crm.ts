@@ -8,6 +8,7 @@ import {
   projectRecords,
   reports,
   taskBoard,
+  teamMembers,
   themePreviews,
 } from "@/data/mock-crm";
 import type { ActivityItem, KPIMetric } from "@/types/crm";
