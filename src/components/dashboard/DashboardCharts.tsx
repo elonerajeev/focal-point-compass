@@ -1,8 +1,12 @@
+import { useMemo, useState } from "react";
+
 import { ArrowUpRight, Clock3, Zap } from "lucide-react";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { motion } from "framer-motion";
 
 import StatusBadge from "@/components/shared/StatusBadge";
+import { SimpleAreaChart, SimpleBarChart, SimpleDonutChart } from "@/components/shared/SimpleCharts";
+import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
 import type { ClientRecord } from "@/types/crm";
 
 type DashboardChartsProps = {
@@ -20,123 +24,116 @@ export default function DashboardCharts({
   focusClients,
   atRiskClients,
 }: DashboardChartsProps) {
+  const [selectedStage, setSelectedStage] = useState(pipelineBreakdown[0] ?? null);
+  const [selectedCadence, setSelectedCadence] = useState(operatingCadence[0] ?? null);
+
+  const totalPipeline = useMemo(
+    () => pipelineBreakdown.reduce((sum, stage) => sum + stage.value, 0),
+    [pipelineBreakdown],
+  );
+  const revenuePoints = revenueSeries.map((point) => ({
+    label: point.month,
+    value: point.revenue,
+  }));
+
   return (
     <>
       <motion.section variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }} className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <div className="rounded-[1.75rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)_/_0.96),hsl(var(--card)_/_0.84))] p-6 shadow-card">
+        <div className={cn("border border-border/60 bg-card/90", RADIUS.xl, SPACING.card)}>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Growth Curve</p>
+              <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Growth Curve</p>
               <h2 className="mt-1 font-display text-2xl font-semibold text-foreground">Revenue and retention momentum</h2>
             </div>
-            <div className="rounded-full border border-border/70 bg-secondary/40 px-3 py-1 text-xs font-medium text-muted-foreground">
+            <div className={cn("border border-border/60 bg-secondary/25 font-medium text-muted-foreground", RADIUS.pill, SPACING.buttonCompact, TEXT.meta)}>
               Quarter to date
             </div>
           </div>
-          <ResponsiveContainer width="100%" height={320}>
-            <AreaChart data={revenueSeries}>
-              <defs>
-                <linearGradient id="dashboardRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.38} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 18,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
-                }}
-              />
-              <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#dashboardRevenue)" strokeWidth={2.75} />
-            </AreaChart>
-          </ResponsiveContainer>
+          <SimpleAreaChart
+            data={revenuePoints}
+            stroke="hsl(var(--primary))"
+            fill="hsl(var(--primary) / 0.2)"
+            accentFill="hsl(var(--accent) / 0.16)"
+          />
         </div>
 
-        <div className="rounded-[1.75rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)_/_0.96),hsl(var(--card)_/_0.84))] p-6 shadow-card">
+        <div className={cn("border border-border/60 bg-card/90", RADIUS.xl, SPACING.card)}>
           <div className="mb-6">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Pipeline Mix</p>
+            <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Pipeline Mix</p>
             <h2 className="mt-1 font-display text-2xl font-semibold text-foreground">Weighted by stage</h2>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <PieChart>
-              <Pie data={pipelineBreakdown} innerRadius={58} outerRadius={94} dataKey="value" paddingAngle={4}>
-                {pipelineBreakdown.map((stage) => (
-                  <Cell key={stage.name} fill={stage.color} strokeWidth={0} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 18,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid gap-3">
-            {pipelineBreakdown.map((stage) => (
-              <div key={stage.name} className="flex items-center gap-3 rounded-2xl border border-border/70 bg-secondary/30 px-4 py-3">
-                <div className="h-3 w-3 rounded-full" style={{ background: stage.color }} />
-                <span className="text-sm text-foreground">{stage.name}</span>
-                <span className="ml-auto text-sm font-semibold text-foreground">{stage.value}%</span>
+          <SimpleDonutChart
+            segments={pipelineBreakdown}
+            selected={selectedStage}
+            onSelect={setSelectedStage}
+          />
+          {selectedStage ? (
+            <div className={cn("mt-4 border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
+              <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Drill-down</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <p className="font-semibold text-foreground">{selectedStage.name}</p>
+                <span className={cn("border border-border/60 bg-background/60 font-semibold text-foreground", RADIUS.pill, SPACING.buttonCompact, TEXT.meta)}>
+                  {Math.round((selectedStage.value / totalPipeline) * 100)}% of pipeline
+                </span>
               </div>
-            ))}
-          </div>
+              <p className={cn("mt-2 text-muted-foreground", TEXT.bodyRelaxed)}>
+                This stage is now selectable so the chart can act like a planning surface instead of a static chart.
+              </p>
+            </div>
+          ) : null}
         </div>
       </motion.section>
 
       <motion.section variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } }} className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr_0.9fr]">
-        <div className="rounded-[1.75rem] border border-border/70 bg-card/90 p-6 shadow-card">
-          <div className="mb-5 flex items-center justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Operating Cadence</p>
-              <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Cross-team performance</h2>
+        <div className={cn("border border-border/60 bg-card/90", RADIUS.xl, SPACING.card)}>
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Operating Cadence</p>
+                <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Cross-team performance</h2>
+              </div>
+              <Zap className="h-5 w-5 text-primary" />
             </div>
-            <Zap className="h-5 w-5 text-primary" />
-          </div>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={operatingCadence} layout="vertical" margin={{ left: 4, right: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="name" type="category" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={false} tickLine={false} width={72} />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: 18,
-                  border: "1px solid hsl(var(--border))",
-                  background: "hsl(var(--card))",
-                }}
-              />
-              <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 10, 10, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <SimpleBarChart
+            items={operatingCadence}
+            selectedIndex={selectedCadence ? operatingCadence.findIndex((item) => item.name === selectedCadence.name) : 0}
+            onSelect={(index) => setSelectedCadence(operatingCadence[index] ?? operatingCadence[0] ?? null)}
+          />
+          {selectedCadence ? (
+            <div className={cn("mt-4 border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
+              <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Selected segment</p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <p className="font-semibold text-foreground">{selectedCadence.name}</p>
+                <p className={cn("font-semibold text-foreground", TEXT.body)}>{selectedCadence.value}%</p>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
+                <div className="h-full rounded-full bg-[linear-gradient(90deg,hsl(var(--primary)),hsl(var(--accent)))]" style={{ width: `${selectedCadence.value}%` }} />
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        <div className="rounded-[1.75rem] border border-border/70 bg-card/90 p-6 shadow-card">
+        <div className={cn("border border-border/60 bg-card/90", RADIUS.xl, SPACING.card)}>
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Priority Accounts</p>
+              <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Priority Accounts</p>
               <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Account management radar</h2>
             </div>
-            <button type="button" className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+            <button type="button" className={cn("premium-hover inline-flex items-center gap-1 font-semibold text-primary", TEXT.meta)}>
               View all
               <ArrowUpRight className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="space-y-4">
             {focusClients.map((client) => (
-              <div key={client.id} className="rounded-[1.25rem] border border-border/70 bg-secondary/28 p-4">
+              <div key={client.id} className={cn("border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
                 <div className="mb-3 flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/18 via-accent/16 to-info/28 text-sm font-semibold text-foreground">
+                    <div className={cn("flex h-12 w-12 items-center justify-center bg-primary/10 font-semibold text-foreground", RADIUS.lg, TEXT.body)}>
                       {client.avatar}
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">{client.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className={cn("text-muted-foreground", TEXT.meta)}>
                         {client.industry} · {client.segment}
                       </p>
                     </div>
@@ -145,15 +142,15 @@ export default function DashboardCharts({
                 </div>
                 <div className="grid gap-3 text-sm sm:grid-cols-3">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Health</p>
+                    <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Health</p>
                     <p className="mt-1 font-semibold text-foreground">{client.healthScore}/100</p>
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Owner</p>
+                    <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Owner</p>
                     <p className="mt-1 font-semibold text-foreground">{client.manager}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Next Action</p>
+                    <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Next Action</p>
                     <p className="mt-1 font-semibold text-foreground">{client.nextAction}</p>
                   </div>
                 </div>
@@ -162,32 +159,32 @@ export default function DashboardCharts({
           </div>
         </div>
 
-        <div className="rounded-[1.75rem] border border-border/70 bg-card/90 p-6 shadow-card">
+        <div className={cn("border border-border/60 bg-card/90", RADIUS.xl, SPACING.card)}>
           <div className="mb-5">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Risk Monitor</p>
+            <p className={cn("text-muted-foreground", TEXT.eyebrow)}>Risk Monitor</p>
             <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Accounts that need intervention</h2>
           </div>
           <div className="space-y-3">
             {atRiskClients.map((client) => (
-              <div key={client.id} className="rounded-[1.25rem] border border-border/70 bg-secondary/28 p-4">
+              <div key={client.id} className={cn("border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-semibold text-foreground">{client.name}</p>
-                    <p className="text-xs text-muted-foreground">{client.nextAction}</p>
+                    <p className={cn("text-muted-foreground", TEXT.meta)}>{client.nextAction}</p>
                   </div>
-                  <span className="rounded-full bg-warning/12 px-3 py-1 text-xs font-semibold text-warning">
+                  <span className={cn("bg-warning/12 font-semibold text-warning", RADIUS.pill, SPACING.buttonCompact, TEXT.meta)}>
                     {client.healthScore}/100
                   </span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-6 rounded-[1.25rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--secondary)_/_0.6),transparent)] p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+          <div className={cn("mt-6 border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
+            <div className={cn("mb-3 flex items-center gap-2 font-semibold text-foreground", TEXT.body)}>
               <Clock3 className="h-4 w-4 text-primary" />
               Suggested focus this afternoon
             </div>
-            <p className="text-sm leading-6 text-muted-foreground">
+            <p className={cn("text-muted-foreground", TEXT.bodyRelaxed)}>
               Have customer success call the two lowest-health enterprise accounts before the next billing cycle. That is the highest-leverage frontend workflow to connect to backend reminders and automation later.
             </p>
           </div>

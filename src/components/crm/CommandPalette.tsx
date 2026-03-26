@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowUpRight, Command, Rocket, Settings2, Sparkles } from "lucide-react";
+import { Search, Sparkles, ArrowUpRight, Command } from "lucide-react";
 
 import {
   CommandDialog,
@@ -9,103 +9,196 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandShortcut,
 } from "@/components/ui/command";
-import { useCommandActions } from "@/hooks/use-crm-data";
+import { commandActions, conversations, invoices, clientRecords, projectRecords, reports, taskBoard, teamMembers } from "@/data/mock-crm";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
 
-const iconBySection = {
-  Navigate: ArrowUpRight,
-  Actions: Sparkles,
-};
+interface SearchEntry {
+  id: string;
+  title: string;
+  description: string;
+  route?: string;
+  intent?: "open-quick-create" | "open-settings";
+}
+
+function highlightText(text: string, query: string) {
+  if (!query) return text;
+  
+  const regex = new RegExp(`(${query})`, "ig");
+  const parts = text.split(regex);
+
+  return parts.map((part, index) =>
+    regex.test(part) ? (
+      <span key={index} className="bg-primary/20 text-primary font-medium">
+        {part}
+      </span>
+    ) : (
+      <span key={index}>{part}</span>
+    ),
+  );
+}
 
 export default function CommandPalette() {
-  const navigate = useNavigate();
   const { commandOpen, closeCommandPalette, openQuickCreate, canUseQuickCreate } = useWorkspace();
-  const { data = [] } = useCommandActions();
+  const { role } = useTheme();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
 
-  const actions = useMemo(
-    () => data.filter((item) => canUseQuickCreate || item.intent !== "open-quick-create"),
-    [canUseQuickCreate, data],
-  );
+  // Build search entries
+  const searchEntries = useMemo(() => {
+    const entries: SearchEntry[] = [];
 
-  const grouped = useMemo(() => {
-    return actions.reduce<Record<string, typeof actions>>((acc, item) => {
-      acc[item.section] = [...(acc[item.section] ?? []), item];
-      return acc;
-    }, {});
-  }, [actions]);
+    // Actions
+    if (canUseQuickCreate) {
+      entries.push({
+        id: "quick-create",
+        title: "Quick Create",
+        description: "Create new client, project, task, or invoice",
+        intent: "open-quick-create",
+      });
+    }
 
-  const handleSelect = (value: string) => {
-    const item = actions.find((entry) => entry.id === value);
-    if (!item) return;
+    // Clients
+    clientRecords.slice(0, 8).forEach((client) => {
+      entries.push({
+        id: `client-${client.id}`,
+        title: client.name,
+        description: `${client.industry} • ${client.tier}`,
+        route: "/sales/clients",
+      });
+    });
 
-    closeCommandPalette();
+    // Projects
+    projectRecords.slice(0, 6).forEach((project) => {
+      entries.push({
+        id: `project-${project.id}`,
+        title: project.name,
+        description: `${project.status} • ${project.stage}`,
+        route: "/workspace/projects",
+      });
+    });
 
-    if (item.intent === "open-quick-create") {
+    // Tasks
+    [...taskBoard.todo, ...taskBoard["in-progress"], ...taskBoard.done].slice(0, 8).forEach((task) => {
+      entries.push({
+        id: `task-${task.id}`,
+        title: task.title,
+        description: `${task.priority} priority • ${task.assignee}`,
+        route: "/workspace/tasks",
+      });
+    });
+
+    // Team
+    teamMembers.slice(0, 6).forEach((member) => {
+      entries.push({
+        id: `member-${member.id}`,
+        title: member.name,
+        description: `${member.role} • ${member.department}`,
+        route: "/people/team",
+      });
+    });
+
+    return entries;
+  }, [canUseQuickCreate]);
+
+  // Filter results
+  const filteredEntries = useMemo(() => {
+    if (!deferredQuery) return searchEntries.slice(0, 12);
+    
+    return searchEntries
+      .filter((entry) => 
+        entry.title.toLowerCase().includes(deferredQuery.toLowerCase()) ||
+        entry.description.toLowerCase().includes(deferredQuery.toLowerCase())
+      )
+      .slice(0, 8);
+  }, [searchEntries, deferredQuery]);
+
+  const handleSelect = (entry: SearchEntry) => {
+    if (entry.intent === "open-quick-create") {
       openQuickCreate();
-      return;
+    } else if (entry.route) {
+      navigate(entry.route);
     }
-
-    if (item.route) {
-      navigate(item.route);
-    }
+    closeCommandPalette();
   };
 
   return (
-    <CommandDialog open={commandOpen} onOpenChange={(open) => (open ? undefined : closeCommandPalette())}>
-      <div className="border-b border-white/10 bg-[linear-gradient(180deg,hsl(var(--card)_/_0.96),hsl(var(--card)_/_0.84))] px-4 py-4">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-accent to-info shadow-[0_18px_44px_hsl(218_80%_8%_/_0.22)]">
-            <Rocket className="h-5 w-5 text-primary-foreground" />
+    <CommandDialog open={commandOpen} onOpenChange={closeCommandPalette}>
+      <div className="bg-gradient-to-br from-white via-slate-50 to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-blue-950/30">
+        <div className="flex items-center gap-3 border-b border-border/50 px-4 py-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+            <Search className="h-4 w-4 text-white" />
           </div>
           <div>
-            <p className="font-display text-lg font-semibold text-foreground">Command Center</p>
-            <p className="text-sm text-muted-foreground">Navigate the CRM, trigger quick actions, and keep velocity high.</p>
+            <p className="font-semibold text-foreground">Global Search</p>
+            <p className="text-xs text-muted-foreground">Find anything in your workspace</p>
           </div>
         </div>
-        <div className="rounded-[1.25rem] border border-border/70 bg-background/60">
-          <CommandInput placeholder="Search pages, workflows, and quick actions..." />
-        </div>
-      </div>
-      <CommandList className="max-h-[420px] bg-[linear-gradient(180deg,hsl(var(--card)_/_0.9),hsl(var(--card)_/_0.82))] p-3">
-        <CommandEmpty>No matching workspace actions.</CommandEmpty>
-        {Object.entries(grouped).map(([section, items]) => {
-          const SectionIcon = iconBySection[section as keyof typeof iconBySection] ?? Settings2;
-
-          return (
-            <CommandGroup
-              key={section}
-              heading={section}
-              className="rounded-[1.25rem] border border-border/60 bg-card/45 p-2"
-            >
-              {items.map((item) => (
+        
+        <CommandInput
+          placeholder="Search clients, projects, tasks, team..."
+          value={query}
+          onValueChange={setQuery}
+          className="border-0 bg-transparent px-4 py-3 text-sm focus:ring-0"
+        />
+        
+        <CommandList className="max-h-80 overflow-y-auto px-2 pb-2">
+          <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
+            No results found for "{deferredQuery}"
+          </CommandEmpty>
+          
+          {filteredEntries.length > 0 && (
+            <CommandGroup>
+              {filteredEntries.map((entry) => (
                 <CommandItem
-                  key={item.id}
-                  value={item.id}
-                  onSelect={handleSelect}
-                  className="rounded-xl px-3 py-3 data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground"
-                >
-                  <div className="mr-3 flex h-9 w-9 items-center justify-center rounded-xl bg-secondary/70 text-primary">
-                    <SectionIcon className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">{item.description}</p>
-                  </div>
-                  {item.shortcut ? (
-                    <CommandShortcut>{item.shortcut}</CommandShortcut>
-                  ) : (
-                    <div className="text-muted-foreground">
-                      <Command className="h-3.5 w-3.5" />
-                    </div>
+                  key={entry.id}
+                  onSelect={() => handleSelect(entry)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer transition-all duration-200",
+                    "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-blue-950/50 dark:hover:to-purple-950/50",
+                    "data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-blue-100 data-[selected=true]:to-purple-100",
+                    "dark:data-[selected=true]:from-blue-900/50 dark:data-[selected=true]:to-purple-900/50"
                   )}
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-700 dark:to-slate-600">
+                    {entry.intent === "open-quick-create" ? (
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    ) : entry.route?.includes("client") ? (
+                      <ArrowUpRight className="h-4 w-4 text-blue-500" />
+                    ) : entry.route?.includes("project") ? (
+                      <ArrowUpRight className="h-4 w-4 text-purple-500" />
+                    ) : entry.route?.includes("task") ? (
+                      <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <ArrowUpRight className="h-4 w-4 text-orange-500" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-foreground truncate">
+                      {highlightText(entry.title, deferredQuery)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {highlightText(entry.description, deferredQuery)}
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    <Command className="h-3 w-3" />
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
-          );
-        })}
-      </CommandList>
+          )}
+        </CommandList>
+        
+        <div className="border-t border-border/50 px-4 py-2">
+          <p className="text-xs text-muted-foreground text-center">
+            Press <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded">↵</kbd> to select • <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded">Esc</kbd> to close
+          </p>
+        </div>
+      </div>
     </CommandDialog>
   );
 }

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { BarChart3, TrendingUp, Users, DollarSign, ArrowUpRight, ArrowDownRight, Globe } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, LineChart, Line } from "recharts";
+import { TrendingUp, Users, DollarSign, ArrowUpRight, ArrowDownRight, Globe } from "lucide-react";
+import { SimpleAreaChart } from "@/components/shared/SimpleCharts";
 
 const monthlyData = [
   { month: "Jan", revenue: 12400, clients: 45, tasks: 120 },
@@ -32,10 +32,15 @@ export default function AnalyticsPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item}>
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          Analytics
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">Deep insights into your business performance</p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="flex items-center gap-2 text-2xl font-display font-bold text-foreground">Analytics</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Deep insights into your business performance</p>
+          </div>
+          <div className="rounded-full border border-border/70 bg-secondary/30 px-3 py-1 text-xs font-medium text-muted-foreground">
+            Jan - Jun snapshot
+          </div>
+        </div>
       </motion.div>
 
       {/* KPI Cards */}
@@ -57,36 +62,41 @@ export default function AnalyticsPage() {
 
       {/* Charts */}
       <motion.div variants={item} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-6 shadow-card">
-          <h3 className="font-display font-semibold text-foreground mb-4">Revenue Trend</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={monthlyData}>
-              <defs>
-                <linearGradient id="analyticsGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
-              <Area type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" fill="url(#analyticsGrad)" strokeWidth={2.5} />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-card backdrop-blur-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-lg font-semibold text-foreground">Revenue Trend</h3>
+              <p className="text-sm text-muted-foreground">Monthly revenue across the first half of the year</p>
+            </div>
+            <span className="rounded-full border border-border/60 bg-secondary/25 px-3 py-1 text-xs font-medium text-muted-foreground">
+              USD
+            </span>
+          </div>
+          <SimpleAreaChart
+            data={monthlyData.map(({ month, revenue }) => ({ label: month, value: revenue }))}
+            stroke="hsl(var(--primary))"
+            fill="hsl(var(--primary) / 0.18)"
+            accentFill="hsl(var(--accent) / 0.16)"
+          />
         </div>
 
-        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur-sm p-6 shadow-card">
-          <h3 className="font-display font-semibold text-foreground mb-4">Client Growth</h3>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
-              <Line type="monotone" dataKey="clients" stroke="hsl(var(--accent))" strokeWidth={2.5} dot={{ fill: "hsl(var(--accent))", r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="rounded-3xl border border-border/70 bg-card/80 p-6 shadow-card backdrop-blur-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-lg font-semibold text-foreground">Client Growth</h3>
+              <p className="text-sm text-muted-foreground">Active client count, month over month</p>
+            </div>
+            <span className="rounded-full border border-border/60 bg-secondary/25 px-3 py-1 text-xs font-medium text-muted-foreground">
+              Active
+            </span>
+          </div>
+          <SimpleAreaChart
+            data={monthlyData.map(({ month, clients }) => ({ label: month, value: clients }))}
+            stroke="hsl(var(--accent))"
+            fill="hsl(var(--accent) / 0.16)"
+            accentFill="hsl(var(--info) / 0.14)"
+            showDots={false}
+          />
         </div>
       </motion.div>
 

@@ -76,7 +76,7 @@ function TaskCard({
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {task.tags.map((tag) => (
-            <span key={tag} className="rounded-full border border-border/70 bg-secondary/35 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <span key={tag} className="rounded-full border border-border/70 bg-secondary/35 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
               {tag}
             </span>
           ))}
@@ -226,7 +226,7 @@ export default function TasksPage() {
       <section className="rounded-[2rem] border border-border/70 bg-[linear-gradient(135deg,hsl(var(--card)_/_0.98),hsl(var(--card)_/_0.82))] p-8 shadow-card">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/45 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/45 px-3 py-1 text-xs uppercase tracking-[0.22em] text-muted-foreground">
               <Flag className="h-3.5 w-3.5 text-primary" />
               Execution Board
             </div>

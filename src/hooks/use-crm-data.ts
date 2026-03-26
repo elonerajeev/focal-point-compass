@@ -22,6 +22,8 @@ export function useDashboardData() {
     queryKey: crmKeys.dashboard,
     queryFn: crmService.getDashboard,
     staleTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 60,
+    refetchIntervalInBackground: true,
   });
 }
 

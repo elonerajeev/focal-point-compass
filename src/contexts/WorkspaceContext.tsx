@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { triggerHaptic } from "@/lib/micro-interactions";
 
 type WorkspaceContextValue = {
   commandOpen: boolean;
@@ -27,11 +28,13 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       if (isCommandPalette) {
         event.preventDefault();
         setCommandOpen((current) => !current);
+        triggerHaptic("selection");
       }
 
       if (isQuickCreate && canUseQuickCreate) {
         event.preventDefault();
         setQuickCreateOpen(true);
+        triggerHaptic("medium");
       }
     };
 
@@ -44,11 +47,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       commandOpen,
       quickCreateOpen,
       canUseQuickCreate,
-      openCommandPalette: () => setCommandOpen(true),
+      openCommandPalette: () => {
+        setCommandOpen(true);
+        triggerHaptic("selection");
+      },
       closeCommandPalette: () => setCommandOpen(false),
       openQuickCreate: () => {
         if (canUseQuickCreate) {
           setQuickCreateOpen(true);
+          triggerHaptic("medium");
         }
       },
       closeQuickCreate: () => setQuickCreateOpen(false),

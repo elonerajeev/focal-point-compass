@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 
 import PageLoader from "@/components/shared/PageLoader";
 import { useConversations, useMessages } from "@/hooks/use-crm-data";
+import { TEXT } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.03 } } };
@@ -48,7 +49,7 @@ export default function MessagesPage() {
       >
         <div className="border-r border-border/70 bg-secondary/18">
           <div className="border-b border-border/70 p-5">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Client and Team Inbox</p>
+            <p className={cn("uppercase tracking-[0.2em] text-muted-foreground", TEXT.eyebrow)}>Client and Team Inbox</p>
             <div className="relative mt-4">
               <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -82,13 +83,13 @@ export default function MessagesPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-3">
                       <p className="truncate text-sm font-semibold text-foreground">{conversation.name}</p>
-                      <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{conversation.time}</span>
+                      <span className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.meta)}>{conversation.time}</span>
                     </div>
                     <p className="mt-1 truncate text-xs text-muted-foreground">{conversation.lastMessage}</p>
                     <div className="mt-3 flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{conversation.team}</span>
+                      <span className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.meta)}>{conversation.team}</span>
                       {conversation.unread > 0 && (
-                        <span className="rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground">
+                        <span className={cn("rounded-full bg-primary px-2 py-1 font-semibold text-primary-foreground", TEXT.meta)}>
                           {conversation.unread}
                         </span>
                       )}
@@ -111,7 +112,7 @@ export default function MessagesPage() {
               </div>
               <div>
                 <p className="font-display text-xl font-semibold text-foreground">{activeConversation?.name}</p>
-                <p className="text-xs text-muted-foreground">{activeConversation?.online ? "Live now" : "Offline"} · {activeConversation?.team}</p>
+                <p className={cn("text-muted-foreground", TEXT.meta)}>{activeConversation?.online ? "Live now" : "Offline"} · {activeConversation?.team}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -139,7 +140,7 @@ export default function MessagesPage() {
                   )}
                 >
                   <p className="text-sm leading-6">{message.text}</p>
-                  <p className={cn("mt-2 text-[10px] uppercase tracking-[0.14em]", message.isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                  <p className={cn("mt-2 uppercase tracking-[0.14em]", message.isMe ? "text-primary-foreground/70" : "text-muted-foreground", TEXT.meta)}>
                     {message.time}
                   </p>
                 </div>

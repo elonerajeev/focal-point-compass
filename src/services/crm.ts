@@ -8,9 +8,10 @@ import {
   projectRecords,
   reports,
   taskBoard,
+  teamMembers,
   themePreviews,
 } from "@/data/mock-crm";
-import type { ActivityItem, KPIMetric } from "@/types/crm";
+import type { ActivityItem, CollaboratorRecord, DashboardSnapshot, KPIMetric } from "@/types/crm";
 
 const simulateLatency = async <T,>(data: T, delay = 120): Promise<T> => {
   await new Promise((resolve) => setTimeout(resolve, delay));
@@ -18,6 +19,7 @@ const simulateLatency = async <T,>(data: T, delay = 120): Promise<T> => {
 };
 
 const dayKey = () => new Date().toISOString().slice(0, 10);
+const liveKey = () => new Date().toISOString().slice(0, 16);
 
 const hashString = (input: string) => {
   let hash = 0;
@@ -38,7 +40,7 @@ const createRng = (seedInput: string) => {
 const pick = <T,>(rng: () => number, values: T[]) => values[Math.floor(rng() * values.length)];
 
 const buildDailyMetrics = (): KPIMetric[] => {
-  const rng = createRng(`${dayKey()}-metrics`);
+  const rng = createRng(`${dayKey()}-${liveKey()}-metrics`);
   const revenue = 1700000 + Math.floor(rng() * 220000);
   const clients = 118 + Math.floor(rng() * 18);
   const coverage = 3.2 + rng() * 0.9;
@@ -53,7 +55,7 @@ const buildDailyMetrics = (): KPIMetric[] => {
 };
 
 const buildDailyRevenueSeries = () => {
-  const rng = createRng(`${dayKey()}-revenue`);
+  const rng = createRng(`${dayKey()}-${liveKey()}-revenue`);
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
   return months.map((month, index) => ({
     month,
@@ -64,7 +66,7 @@ const buildDailyRevenueSeries = () => {
 };
 
 const buildDailyPipeline = () => {
-  const rng = createRng(`${dayKey()}-pipeline`);
+  const rng = createRng(`${dayKey()}-${liveKey()}-pipeline`);
   const base = [
     { name: "Qualified", color: "hsl(211 38% 51%)" },
     { name: "Proposal", color: "hsl(213 43% 64%)" },
@@ -79,7 +81,7 @@ const buildDailyPipeline = () => {
 };
 
 const buildDailyCadence = () => {
-  const rng = createRng(`${dayKey()}-cadence`);
+  const rng = createRng(`${dayKey()}-${liveKey()}-cadence`);
   return [
     { name: "Revenue", value: 84 + Math.floor(rng() * 10) },
     { name: "Delivery", value: 78 + Math.floor(rng() * 12) },
@@ -92,12 +94,12 @@ const buildDailyCadence = () => {
 const buildDailyActivityFeed = (): ActivityItem[] => {
   const rng = createRng(`${dayKey()}-activity`);
   const templates: ActivityItem[] = [
-    { id: 1, text: "Client follow-up completed for a renewal account", time: "5 min ago", type: "completed" },
-    { id: 2, text: "A new task was assigned to the delivery team", time: "18 min ago", type: "pending" },
-    { id: 3, text: "Executive review booked for later today", time: "42 min ago", type: "active" },
-    { id: 4, text: "A project moved into review for QA sign-off", time: "2 hours ago", type: "in-progress" },
-    { id: 5, text: "A hiring candidate entered the final stage", time: "3 hours ago", type: "pending" },
-    { id: 6, text: "Attendance corrections were requested by a manager", time: "4 hours ago", type: "completed" },
+    { id: 1, text: "Client follow-up completed for a renewal account", time: "5 min ago", type: "completed", category: "sales", source: "Accounts" },
+    { id: 2, text: "A new task was assigned to the delivery team", time: "18 min ago", type: "pending", category: "delivery", source: "Workspace" },
+    { id: 3, text: "Executive review booked for later today", time: "42 min ago", type: "active", category: "collaboration", source: "Leadership" },
+    { id: 4, text: "A project moved into review for QA sign-off", time: "2 hours ago", type: "in-progress", category: "delivery", source: "Projects" },
+    { id: 5, text: "A hiring candidate entered the final stage", time: "3 hours ago", type: "pending", category: "hiring", source: "HR" },
+    { id: 6, text: "Attendance corrections were requested by a manager", time: "4 hours ago", type: "completed", category: "system", source: "People" },
   ];
 
   const shuffled = [...templates].sort(() => rng() - 0.5);
@@ -106,6 +108,24 @@ const buildDailyActivityFeed = (): ActivityItem[] => {
     ...item,
     id: index + 1,
     time: timeLabels[index],
+  }));
+};
+
+const buildCollaborators = (): CollaboratorRecord[] => {
+  const rng = createRng(`${dayKey()}-${liveKey()}-collaborators`);
+  const roster = [
+    { id: "sj", name: "Sarah Johnson", role: "Revenue", avatar: "SJ" },
+    { id: "mc", name: "Mike Chen", role: "Platform", avatar: "MC" },
+    { id: "ed", name: "Emily Davis", role: "Growth", avatar: "ED" },
+    { id: "lp", name: "Lisa Park", role: "Design", avatar: "LP" },
+  ];
+
+  const statuses: CollaboratorRecord["status"][] = ["online", "reviewing", "idle"];
+
+  return roster.map((member, index) => ({
+    ...member,
+    status: pick(rng, statuses),
+    lastSeen: index === 0 ? "now" : `${5 + index * 3}m ago`,
   }));
 };
 
@@ -133,7 +153,7 @@ const buildTodayFocus = () => {
 };
 
 const buildExecutionReadiness = () => {
-  const rng = createRng(`${dayKey()}-readiness`);
+  const rng = createRng(`${dayKey()}-${liveKey()}-readiness`);
   return 84 + Math.floor(rng() * 12);
 };
 
@@ -147,7 +167,8 @@ export const crmService = {
       activityFeed: buildDailyActivityFeed(),
       todayFocus: buildTodayFocus(),
       executionReadiness: buildExecutionReadiness(),
-    }),
+      collaborators: buildCollaborators(),
+    } satisfies DashboardSnapshot),
   getClients: () => simulateLatency(clientRecords),
   getProjects: () => simulateLatency(projectRecords),
   getTasks: () => simulateLatency(taskBoard),

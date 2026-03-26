@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
 import MasterSidebar from "./MasterSidebar";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
-import FloatingElements from "@/components/shared/FloatingElements";
+import MobileBottomNav from "./MobileBottomNav";
 import { getSectionForPath, type SidebarSectionKey } from "./sidebarConfig";
 import { readStoredString, writeStoredString } from "@/lib/preferences";
 
@@ -58,17 +58,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--info)_/_0.08),transparent_22%),radial-gradient(circle_at_80%_12%,hsl(var(--accent)_/_0.06),transparent_18%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]" />
-      <FloatingElements />
-      <MasterSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-      <Sidebar activeSection={activeSection} width={detailWidth} onResizeStart={beginResize} />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--info)_/_0.02),transparent_26%),radial-gradient(circle_at_80%_12%,hsl(var(--accent)_/_0.015),transparent_22%),linear-gradient(180deg,hsl(var(--background)),hsl(var(--background)))]" />
+      <div className="hidden md:block">
+        <MasterSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+        <Sidebar activeSection={activeSection} width={detailWidth} onResizeStart={beginResize} />
+      </div>
       <div
-        className="sidebar-transition relative z-10 min-h-screen"
-        style={{ marginLeft: `${MASTER_WIDTH + detailWidth}px` }}
+        className="sidebar-transition relative z-10 min-h-screen md:ml-[var(--sidebar-offset)]"
+        style={{ ["--sidebar-offset" as string]: `${MASTER_WIDTH + detailWidth}px` }}
       >
         <Navbar />
-        <main className="mx-auto w-full max-w-[1600px] p-4 sm:p-6 md:p-8">{children}</main>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.main
+            key={location.pathname}
+            initial={{ opacity: 0, y: 14, scale: 0.992 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.992 }}
+            transition={{ type: "spring", stiffness: 260, damping: 28, mass: 0.85 }}
+            className="mx-auto w-full max-w-[1600px] p-4 pb-[calc(7rem+env(safe-area-inset-bottom))] sm:p-6 md:p-8 md:pb-8"
+          >
+            {children}
+          </motion.main>
+        </AnimatePresence>
       </div>
+      <MobileBottomNav />
     </div>
   );
 }

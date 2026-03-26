@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Shield, Eye, Edit, Trash2, Users, ClipboardList, FolderKanban, UserCheck, Settings, BarChart3 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useTeamMembers } from "@/hooks/use-crm-data";
 import { cn } from "@/lib/utils";
 import type { TeamMemberRecord } from "@/types/crm";
@@ -50,7 +51,7 @@ const roles = [
   },
 ];
 
-const permIcons: Record<string, any> = {
+const permIcons: Record<string, LucideIcon> = {
   Dashboard: BarChart3,
   "Team Management": Users,
   "Client Management": UserCheck,

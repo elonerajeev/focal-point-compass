@@ -12,7 +12,7 @@ export default function LeadsPage() {
     <div className="space-y-6">
       <section className="rounded-[1.75rem] border border-border/70 bg-card/90 p-6 shadow-card">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/40 px-3 py-1 text-xs font-medium text-muted-foreground">
             <CirclePlus className="h-3.5 w-3.5 text-primary" />
             Sales
           </div>
@@ -38,7 +38,7 @@ export default function LeadsPage() {
               </div>
               <div className="mt-4 flex items-center justify-between rounded-2xl border border-border/70 bg-secondary/20 p-4">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Score</p>
+                  <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Score</p>
                   <p className="mt-1 text-sm font-semibold text-foreground">{lead.score}/100</p>
                 </div>
                 <Target className="h-5 w-5 text-primary" />

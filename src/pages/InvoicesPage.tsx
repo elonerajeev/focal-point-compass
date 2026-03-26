@@ -69,7 +69,7 @@ export default function InvoicesPage() {
             { label: "Rejected", value: String(summary.rejected) },
           ].map((card) => (
             <div key={card.label} className="rounded-[1.5rem] border border-border/70 bg-secondary/28 p-5">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{card.label}</p>
               <p className="mt-2 font-display text-2xl font-semibold text-foreground">{card.value}</p>
             </div>
           ))}
@@ -93,7 +93,7 @@ export default function InvoicesPage() {
             <thead className="bg-secondary/24">
               <tr>
                 {["Invoice", "Client", "Amount", "Issued", "Due", "Status", "Action"].map((heading) => (
-                  <th key={heading} className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  <th key={heading} className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                     {heading}
                   </th>
                 ))}

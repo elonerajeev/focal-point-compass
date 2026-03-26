@@ -25,6 +25,7 @@ import {
   Receipt,
   UsersRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import type { UserRole } from "@/contexts/ThemeContext";
 
@@ -32,7 +33,7 @@ export type SidebarSectionKey = "overview" | "people" | "workspace" | "sales" | 
 
 export interface SidebarItem {
   to: string;
-  icon: any;
+  icon: LucideIcon;
   label: string;
   roles: UserRole[];
   badge?: string;
@@ -42,7 +43,7 @@ export interface SidebarSection {
   key: SidebarSectionKey;
   label: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   items: SidebarItem[];
 }
 
@@ -204,4 +205,9 @@ export function getSectionForPath(pathname: string): SidebarSectionKey {
 
 export function getSectionMeta(key: SidebarSectionKey) {
   return sidebarSections.find((section) => section.key === key) ?? sidebarSections[0];
+}
+
+export function getFirstAccessiblePathForSection(key: SidebarSectionKey, role: UserRole) {
+  const section = getVisibleSections(role).find((item) => item.key === key);
+  return section?.items[0]?.to ?? getAccessiblePathForRole(role);
 }

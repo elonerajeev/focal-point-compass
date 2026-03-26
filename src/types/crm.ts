@@ -18,6 +18,17 @@ export interface ActivityItem {
   text: string;
   time: string;
   type: CRMStatus | TaskPriority;
+  category?: "collaboration" | "sales" | "delivery" | "finance" | "hiring" | "system";
+  source?: string;
+}
+
+export interface CollaboratorRecord {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  status: "online" | "idle" | "reviewing";
+  lastSeen: string;
 }
 
 export interface ClientRecord {
@@ -112,6 +123,17 @@ export interface ThemePreview {
   label: string;
   subtitle: string;
   vibe: string;
+}
+
+export interface DashboardSnapshot {
+  metrics: KPIMetric[];
+  revenueSeries: Array<{ month: string; revenue: number; deals: number; retention: number }>;
+  pipelineBreakdown: Array<{ name: string; value: number; color: string }>;
+  operatingCadence: Array<{ name: string; value: number }>;
+  activityFeed: ActivityItem[];
+  todayFocus: string[];
+  executionReadiness: number;
+  collaborators: CollaboratorRecord[];
 }
 
 export interface TeamMemberRecord {

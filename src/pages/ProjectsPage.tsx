@@ -37,7 +37,7 @@ export default function ProjectsPage() {
     <div className="space-y-6">
       <section className="rounded-[2rem] border border-border/70 bg-[linear-gradient(135deg,hsl(var(--card)_/_0.98),hsl(var(--card)_/_0.84))] p-8 shadow-card">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/45 px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/45 px-3 py-1 text-xs uppercase tracking-[0.22em] text-muted-foreground">
             <FolderKanban className="h-3.5 w-3.5 text-primary" />
             Program Delivery
           </div>
@@ -57,7 +57,7 @@ export default function ProjectsPage() {
               <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <item.icon className="h-5 w-5" />
               </div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{item.label}</p>
               <p className="mt-1 font-display text-2xl font-semibold text-foreground">{item.value}</p>
             </div>
           ))}
@@ -106,7 +106,7 @@ export default function ProjectsPage() {
                     <h2 className="font-display text-xl font-semibold text-foreground">{project.name}</h2>
                     <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{project.description}</p>
                     {pinnedIds.includes(String(project.id)) && (
-                      <span className="mt-2 inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+                      <span className="mt-2 inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                         Pinned
                       </span>
                     )}
@@ -119,19 +119,19 @@ export default function ProjectsPage() {
               </div>
               <div className="grid gap-4 md:grid-cols-4">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Stage</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stage</p>
                   <p className="mt-1 font-semibold text-foreground">{project.stage}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Budget</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Budget</p>
                   <p className="mt-1 font-semibold text-foreground">{project.budget}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Tasks complete</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Tasks complete</p>
                   <p className="mt-1 font-semibold text-foreground">{project.tasks.done}/{project.tasks.total}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Target date</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Target date</p>
                   <p className="mt-1 flex items-center gap-2 font-semibold text-foreground">
                     <Calendar className="h-4 w-4 text-primary" />
                     {project.dueDate}
@@ -143,7 +143,7 @@ export default function ProjectsPage() {
         </div>
         <aside className="rounded-[1.75rem] border border-border/70 bg-card/88 p-5 shadow-card backdrop-blur-xl">
           <div className="mb-4">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Portfolio Notes</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Portfolio Notes</p>
             <h2 className="mt-1 font-display text-xl font-semibold text-foreground">What improves later with backend</h2>
           </div>
           <div className="space-y-3 text-sm leading-6 text-muted-foreground">

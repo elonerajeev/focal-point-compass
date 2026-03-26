@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Building2, ClipboardList, CreditCard, FolderKanban, Sparkles } from "lucide-react";
+import { Building2, ClipboardList, CreditCard, FolderKanban, Sparkles, Zap, CheckCircle2, Clock, User } from "lucide-react";
 
 import {
   Dialog,
@@ -9,6 +9,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
+import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
+import { triggerHaptic } from "@/lib/micro-interactions";
 
 const workflows = [
   {
@@ -16,28 +20,36 @@ const workflows = [
     title: "New Client",
     description: "Create an account shell with owner, segment, and next action.",
     icon: Building2,
-    accent: "from-primary/18 via-primary/8 to-transparent",
+    gradient: "from-blue-500/20 via-blue-400/10 to-transparent",
+    iconBg: "bg-gradient-to-br from-blue-500 to-blue-600",
+    border: "border-blue-500/20",
   },
   {
     id: "project",
-    title: "New Project",
+    title: "New Project", 
     description: "Open a delivery track, assign budget, and map milestones.",
     icon: FolderKanban,
-    accent: "from-accent/18 via-accent/8 to-transparent",
+    gradient: "from-purple-500/20 via-purple-400/10 to-transparent",
+    iconBg: "bg-gradient-to-br from-purple-500 to-purple-600",
+    border: "border-purple-500/20",
   },
   {
     id: "task",
     title: "New Task",
     description: "Create an execution task with priority, owner, and due date.",
     icon: ClipboardList,
-    accent: "from-info/18 via-info/10 to-transparent",
+    gradient: "from-emerald-500/20 via-emerald-400/10 to-transparent",
+    iconBg: "bg-gradient-to-br from-emerald-500 to-emerald-600",
+    border: "border-emerald-500/20",
   },
   {
     id: "invoice",
     title: "Invoice Draft",
     description: "Generate a finance-ready invoice draft for review.",
     icon: CreditCard,
-    accent: "from-success/18 via-success/10 to-transparent",
+    gradient: "from-orange-500/20 via-orange-400/10 to-transparent",
+    iconBg: "bg-gradient-to-br from-orange-500 to-orange-600",
+    border: "border-orange-500/20",
   },
 ];
 
@@ -51,19 +63,23 @@ export default function QuickCreateDialog() {
 
   return (
     <Dialog open={quickCreateOpen} onOpenChange={(open) => (open ? undefined : closeQuickCreate())}>
-      <DialogContent className="m-4 w-[min(96vw,72rem)] max-w-none overflow-hidden rounded-[1.75rem] border border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)_/_0.98),hsl(var(--card)_/_0.9))] p-0 shadow-[0_40px_100px_hsl(218_80%_6%_/_0.34)]">
-        <div className="grid max-h-[calc(100dvh-2rem)] overflow-hidden lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="border-b border-border/70 bg-[linear-gradient(180deg,hsl(var(--sidebar-bg)_/_0.96),hsl(var(--secondary)_/_0.9))] p-6 lg:border-b-0 lg:border-r lg:p-7">
+      <DialogContent className={cn("w-[min(96vw,64rem)] max-w-none overflow-hidden border-0 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-900 dark:via-slate-800 dark:to-blue-950/30 p-0 shadow-[0_40px_100px_rgba(0,0,0,0.25)] backdrop-blur-xl", RADIUS.xl)}>
+        <div className="max-h-[min(92vh,48rem)] overflow-hidden lg:grid lg:grid-cols-[0.8fr_1.2fr]">
+          {/* Left Panel - Workflow Selection */}
+          <div className={cn("border-b border-white/10 bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-blue-950/95 backdrop-blur-xl", SPACING.card, "lg:flex lg:min-h-[32rem] lg:flex-col lg:border-b-0 lg:border-r lg:border-white/10 lg:p-6")}>
+            {/* Header */}
             <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-info via-accent to-primary shadow-[0_20px_40px_hsl(218_80%_8%_/_0.22)]">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
+              <div className={cn("flex h-10 w-10 items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 shadow-lg", RADIUS.lg)}>
+                <Zap className="h-5 w-5 text-white" />
               </div>
               <div>
-                <p className="font-display text-xl font-semibold text-foreground">Quick Create</p>
-                <p className="text-sm text-muted-foreground">Launch CRM work without leaving context.</p>
+                <p className="font-display text-xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">Quick Create</p>
+                <p className="text-blue-200/70 text-sm">Choose what to create</p>
               </div>
             </div>
-            <div className="space-y-2.5 overflow-y-auto pr-1 lg:max-h-[calc(100dvh-9rem)]">
+
+            {/* Workflow Options */}
+            <div className="flex-1 space-y-3">
               {workflows.map((workflow) => {
                 const Icon = workflow.icon;
                 const isSelected = workflow.id === selected;
@@ -73,73 +89,115 @@ export default function QuickCreateDialog() {
                     key={workflow.id}
                     type="button"
                     onClick={() => setSelected(workflow.id)}
-                    className={`w-full rounded-[1.25rem] border px-4 py-4 text-left transition-all ${
+                    className={cn(
+                      "premium-hover w-full text-left transition-all duration-300 group relative overflow-hidden",
+                      RADIUS.lg,
+                      SPACING.cardCompact,
                       isSelected
-                        ? "border-primary/20 bg-primary/[0.06] shadow-[0_20px_40px_hsl(218_80%_5%_/_0.12)]"
-                        : "border-border/70 bg-background/35 hover:bg-background/55"
-                    }`}
+                        ? `border ${workflow.border} bg-gradient-to-r ${workflow.gradient} shadow-lg scale-[1.02]`
+                        : "border border-white/10 bg-white/5 hover:bg-white/10 hover:scale-[1.01]",
+                    )}
                   >
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary/60 text-primary">
-                      <Icon className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className={cn("flex h-10 w-10 items-center justify-center text-white shadow-md", workflow.iconBg, RADIUS.md)}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white">{workflow.title}</p>
+                        <p className="text-blue-200/70 text-sm">{workflow.description}</p>
+                      </div>
+                      {isSelected && (
+                        <CheckCircle2 className="h-5 w-5 text-green-400" />
+                      )}
                     </div>
-                    <p className="font-display text-base font-semibold text-foreground">{workflow.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{workflow.description}</p>
                   </button>
                 );
               })}
             </div>
           </div>
-          <div className="flex min-h-0 flex-col p-6 lg:p-7">
+
+          {/* Right Panel - Form */}
+          <div className={cn("flex min-h-0 flex-col bg-gradient-to-br from-white via-slate-50 to-blue-50/50 dark:from-slate-800 dark:via-slate-700 dark:to-blue-900/20", SPACING.card, "lg:p-6")}>
             <DialogHeader className="mb-6 text-left">
-              <DialogTitle className="font-display text-2xl font-semibold text-foreground">
+              <DialogTitle className="font-display text-2xl font-bold bg-gradient-to-r from-slate-900 to-blue-600 dark:from-white dark:to-blue-300 bg-clip-text text-transparent">
                 {workflows.find((workflow) => workflow.id === selected)?.title}
               </DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground">
-                Structured like a real workflow now, easy to connect to backend mutations later.
+              <DialogDescription className="text-slate-600 dark:text-slate-300">
+                Fill in the details to create your {workflows.find((workflow) => workflow.id === selected)?.title.toLowerCase()}.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 md:grid-cols-2 lg:flex-1 lg:content-start lg:overflow-y-auto lg:pr-1">
+            
+            {/* Form Fields */}
+            <div className="grid gap-4 md:grid-cols-2 flex-1">
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Name</span>
-                <input className="h-11 w-full rounded-2xl border border-border/70 bg-background/60 px-4 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="High-value account, project, or task title" />
+                <span className="font-medium text-slate-700 dark:text-slate-200">Name</span>
+                <input 
+                  className={cn("h-10 w-full border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20", RADIUS.md)} 
+                  placeholder="Enter a name" 
+                />
               </label>
+              
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Owner</span>
-                <input className="h-11 w-full rounded-2xl border border-border/70 bg-background/60 px-4 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Assign an owner" />
+                <span className="font-medium text-slate-700 dark:text-slate-200">Owner</span>
+                <input 
+                  className={cn("h-10 w-full border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition-all duration-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20", RADIUS.md)} 
+                  placeholder="Assign owner" 
+                />
               </label>
+              
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Priority / Tier</span>
-                <input className="h-11 w-full rounded-2xl border border-border/70 bg-background/60 px-4 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Enterprise, critical, or strategic" />
+                <span className="font-medium text-slate-700 dark:text-slate-200">Priority</span>
+                <select 
+                  className={cn("h-10 w-full border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition-all duration-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20", RADIUS.md)}
+                >
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                </select>
               </label>
+              
               <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Target Date</span>
-                <input className="h-11 w-full rounded-2xl border border-border/70 bg-background/60 px-4 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Select a due date or launch date" />
+                <span className="font-medium text-slate-700 dark:text-slate-200">Due Date</span>
+                <input 
+                  type="date"
+                  className={cn("h-10 w-full border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 text-sm text-slate-900 dark:text-slate-100 outline-none transition-all duration-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20", RADIUS.md)} 
+                />
               </label>
+              
               <label className="space-y-2 md:col-span-2">
-                <span className="text-sm font-medium text-foreground">Summary</span>
-                <textarea className="min-h-24 w-full rounded-[1.25rem] border border-border/70 bg-background/60 px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Capture the commercial context, expected outcome, and next action." />
+                <span className="font-medium text-slate-700 dark:text-slate-200">Description</span>
+                <textarea 
+                  className={cn("min-h-20 w-full border border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20", RADIUS.md)} 
+                  placeholder="Add a description..." 
+                />
               </label>
             </div>
-            <div className="mt-6 flex flex-col gap-3 rounded-[1.5rem] border border-border/70 bg-secondary/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-foreground">Prepared for future backend integration</p>
-                <p className="text-xs text-muted-foreground">These fields mirror a clean request payload shape for future API mutations.</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={closeQuickCreate}
-                  className="rounded-2xl border border-border/70 px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:brightness-105"
-                >
-                  Create Draft
-                </button>
-              </div>
+            
+            {/* Actions */}
+            <div className="mt-6 flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("selection");
+                  closeQuickCreate();
+                }}
+                className={cn("premium-hover border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-800/80 font-medium text-slate-700 dark:text-slate-200 transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-700", RADIUS.md, SPACING.button)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("success");
+                  toast.success(`${workflows.find((workflow) => workflow.id === selected)?.title} created!`, {
+                    description: "Your item has been created successfully.",
+                  });
+                  closeQuickCreate();
+                }}
+                className={cn("premium-hover bg-gradient-to-r from-blue-500 to-purple-600 font-medium text-white transition-all duration-200 hover:from-blue-600 hover:to-purple-700 shadow-lg", RADIUS.md, SPACING.button)}
+              >
+                Create {workflows.find((workflow) => workflow.id === selected)?.title}
+              </button>
             </div>
           </div>
         </div>

@@ -18,6 +18,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useClients } from "@/hooks/use-crm-data";
 import { useListPreferences } from "@/hooks/use-list-preferences";
+import { TEXT } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 
 const segmentOptions = ["all", "Expansion", "Renewal", "New Business"] as const;
@@ -73,7 +74,7 @@ export default function ClientsPage() {
       <section className="rounded-[1.75rem] border border-border/70 bg-card/90 p-6 shadow-card">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/40 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+            <div className={cn("inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/40 px-3 py-1 font-medium text-muted-foreground", TEXT.eyebrow)}>
               <Sparkles className="h-3.5 w-3.5 text-primary" />
               Client Portfolio
             </div>
@@ -112,7 +113,7 @@ export default function ClientsPage() {
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <item.icon className="h-5 w-5" />
               </div>
-              <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{item.label}</p>
+              <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>{item.label}</p>
               <p className="mt-1 font-display text-2xl font-semibold text-foreground">{item.value}</p>
             </div>
           ))}
@@ -224,7 +225,7 @@ export default function ClientsPage() {
 
                   <div className="flex items-center gap-2">
                     {pinnedIds.includes(String(client.id)) && (
-                      <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-primary">
+                      <span className={cn("rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-semibold uppercase tracking-[0.14em] text-primary", TEXT.meta)}>
                         Pinned
                       </span>
                     )}
@@ -234,26 +235,26 @@ export default function ClientsPage() {
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-2xl border border-border/70 bg-secondary/20 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Revenue</p>
+                    <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Revenue</p>
                     <p className="mt-1 text-sm font-semibold text-foreground">{client.revenue}</p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-secondary/20 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Health</p>
+                    <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Health</p>
                     <p className="mt-1 text-sm font-semibold text-foreground">{client.healthScore}/100</p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-secondary/20 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Owner</p>
+                    <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Owner</p>
                     <p className="mt-1 text-sm font-semibold text-foreground">{client.manager}</p>
                   </div>
                   <div className="rounded-2xl border border-border/70 bg-secondary/20 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Segment</p>
+                    <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Segment</p>
                     <p className="mt-1 text-sm font-semibold text-foreground">{client.segment}</p>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-border/70 bg-secondary/20 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Next action</p>
+                    <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Next action</p>
                     <p className="mt-1 text-sm font-semibold text-foreground">{client.nextAction}</p>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -269,7 +270,7 @@ export default function ClientsPage() {
         <aside className="space-y-4">
           <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-5 shadow-card">
             <div className="mb-4">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Portfolio Notes</p>
+              <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Portfolio Notes</p>
               <h2 className="mt-1 font-display text-xl font-semibold text-foreground">What matters here</h2>
             </div>
             <div className="space-y-3 text-sm leading-6 text-muted-foreground">
@@ -281,7 +282,7 @@ export default function ClientsPage() {
 
           <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-5 shadow-card">
             <div className="mb-4">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Action Queue</p>
+              <p className={cn("uppercase tracking-[0.14em] text-muted-foreground", TEXT.eyebrow)}>Action Queue</p>
               <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Top follow-ups</h2>
             </div>
             <div className="space-y-3">

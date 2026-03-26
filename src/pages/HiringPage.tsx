@@ -81,7 +81,8 @@ export default function HiringPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[960px]">
           <thead>
             <tr className="border-b border-border bg-secondary/50">
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">Candidate</th>
@@ -151,11 +152,12 @@ export default function HiringPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-5 shadow-card">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Reference system</p>
+        <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Reference system</p>
         <h2 className="mt-1 font-display text-xl font-semibold text-foreground">Candidate checks</h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           This can become a real reference workflow later with feedback forms, approvals, and verification tracking.

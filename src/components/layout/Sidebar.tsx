@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, Sparkles, UserCircle2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { RADIUS, TEXT } from "@/lib/design-tokens";
 import { useTheme } from "@/contexts/ThemeContext";
 import { getSectionMeta, getVisibleSections, type SidebarSectionKey } from "./sidebarConfig";
 
@@ -37,17 +38,17 @@ export default function Sidebar({ activeSection, width, onResizeStart }: Sidebar
       <div className={cn("relative flex items-center border-b border-sidebar-border", compact ? "h-14 px-3" : "h-16 px-4")}>
         {!compact && (
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-sidebar-muted">Section</p>
+            <p className={cn("font-semibold uppercase tracking-[0.22em] text-sidebar-muted", TEXT.meta)}>Section</p>
             <h2 className="mt-1 font-display text-lg font-semibold text-sidebar-foreground">{section.label}</h2>
           </div>
         )}
-        <div className={cn("ml-auto flex items-center justify-center rounded-2xl bg-sidebar-hover text-sidebar-active", compact ? "h-10 w-10" : "h-9 w-9")}>
+        <div className={cn("ml-auto flex items-center justify-center bg-sidebar-hover text-sidebar-active", RADIUS.lg, compact ? "h-10 w-10" : "h-9 w-9")}>
           <section.icon className="h-4.5 w-4.5" />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        {!compact && <p className="px-2 text-[11px] font-medium text-sidebar-muted">{section.description}</p>}
+        {!compact && <p className={cn("px-2 font-medium text-sidebar-muted", TEXT.meta)}>{section.description}</p>}
         <div className="mt-4 space-y-1.5">
           {visibleItems.map((item) => {
             const isActive = location.pathname === item.to;
@@ -63,7 +64,7 @@ export default function Sidebar({ activeSection, width, onResizeStart }: Sidebar
                     : "text-sidebar-foreground/92 hover:bg-sidebar-hover hover:text-sidebar-foreground",
                 )}
               >
-                <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl border transition", isActive ? "border-sidebar-active/30 bg-sidebar-active/12" : "border-sidebar-border/80 bg-sidebar-hover/40")}>
+                <div className={cn("flex h-9 w-9 items-center justify-center border transition", RADIUS.md, isActive ? "border-sidebar-active/30 bg-sidebar-active/12" : "border-sidebar-border/80 bg-sidebar-hover/40")}>
                   <item.icon className={cn("h-4.5 w-4.5", isActive ? "text-sidebar-active" : "text-sidebar-muted group-hover:text-sidebar-foreground")} />
                 </div>
                 {!compact && (
@@ -86,7 +87,7 @@ export default function Sidebar({ activeSection, width, onResizeStart }: Sidebar
           })}
         </div>
         {!visibleItems.length && (
-          <div className="mt-4 rounded-2xl border border-dashed border-sidebar-border/70 bg-sidebar-hover/20 p-4 text-center text-xs text-sidebar-muted">
+          <div className={cn("mt-4 border border-dashed border-sidebar-border/70 bg-sidebar-hover/20 text-center text-sidebar-muted", RADIUS.lg, TEXT.meta, "p-4")}>
             No available pages for this role in this section.
           </div>
         )}
@@ -94,13 +95,13 @@ export default function Sidebar({ activeSection, width, onResizeStart }: Sidebar
 
       {!compact && (
         <div className="border-t border-sidebar-border p-3">
-        <div className="rounded-2xl border border-sidebar-border/70 bg-sidebar-hover/45 p-3">
+        <div className={cn("border border-sidebar-border/70 bg-sidebar-hover/45", RADIUS.lg, "p-3")}>
           <div className="flex items-center gap-2">
             <UserCircle2 className="h-4 w-4 text-sidebar-active" />
             <p className="text-sm font-semibold text-sidebar-foreground">John Doe</p>
           </div>
-          <p className="mt-1 text-[10px] capitalize text-sidebar-muted">{role}</p>
-          <div className="mt-3 flex items-center gap-2 text-[10px] text-sidebar-muted">
+          <p className={cn("mt-1 capitalize text-sidebar-muted", TEXT.meta)}>{role}</p>
+          <div className={cn("mt-3 flex items-center gap-2 text-sidebar-muted", TEXT.meta)}>
             <Sparkles className="h-3.5 w-3.5" />
             <span>Backend-ready workspace</span>
           </div>

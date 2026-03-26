@@ -6,9 +6,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import AppLayout from "@/components/layout/AppLayout";
 import RouteAccessGuard from "@/components/layout/RouteAccessGuard";
 import PageLoader from "@/components/shared/PageLoader";
+import AppErrorBoundary from "@/components/shared/AppErrorBoundary";
+import FloatingElements from "@/components/shared/FloatingElements";
 import CommandPalette from "@/components/crm/CommandPalette";
 import QuickCreateDialog from "@/components/crm/QuickCreateDialog";
 
@@ -53,15 +56,18 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <WorkspaceProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <CommandPalette />
-            <QuickCreateDialog />
-            <AppLayout>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
+        <NotificationProvider>
+          <TooltipProvider>
+            <AppErrorBoundary>
+              <FloatingElements />
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <CommandPalette />
+                <QuickCreateDialog />
+                <AppLayout>
+                  <Suspense fallback={<PageLoader />}>
+                    <Routes>
                   <Route path="/" element={<Navigate to="/overview" replace />} />
                   <Route path="/overview" element={<RouteAccessGuard><Dashboard /></RouteAccessGuard>} />
                   <Route path="/overview/activity" element={<RouteAccessGuard><ActivityPage /></RouteAccessGuard>} />
@@ -120,11 +126,13 @@ const App = () => (
                   <Route path="/billing" element={<Navigate to="/system/billing" replace />} />
                   <Route path="/settings" element={<Navigate to="/system/settings" replace />} />
                   <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </AppLayout>
-          </BrowserRouter>
-        </TooltipProvider>
+                    </Routes>
+                  </Suspense>
+                </AppLayout>
+              </BrowserRouter>
+            </AppErrorBoundary>
+          </TooltipProvider>
+        </NotificationProvider>
       </WorkspaceProvider>
     </ThemeProvider>
   </QueryClientProvider>

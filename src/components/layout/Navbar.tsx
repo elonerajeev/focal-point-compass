@@ -3,6 +3,11 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme, UserRole } from "@/contexts/ThemeContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import NotificationCenter from "@/components/layout/NotificationCenter";
+import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
+import { toast } from "@/components/ui/sonner";
+import { triggerHaptic } from "@/lib/micro-interactions";
 
 const roleLabels: Record<UserRole, { label: string; emoji: string }> = {
   admin: { label: "Admin", emoji: "👑" },
@@ -14,47 +19,37 @@ const roleLabels: Record<UserRole, { label: string; emoji: string }> = {
 export default function Navbar() {
   const { mode, toggleMode, role, setRole } = useTheme();
   const { openCommandPalette, openQuickCreate, canUseQuickCreate } = useWorkspace();
-  const [showNotifications, setShowNotifications] = useState(false);
+  const { unreadCount, toggleCenter, centerOpen } = useNotifications();
   const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
-  const notifications = [
-    { id: 1, text: "New client added: Acme Corp", time: "2m ago", unread: true },
-    { id: 2, text: "Task 'Design Review' completed", time: "15m ago", unread: true },
-    { id: 3, text: "Meeting with Sarah at 3 PM", time: "1h ago", unread: false },
-    { id: 4, text: "Project milestone reached", time: "3h ago", unread: false },
-    { id: 5, text: "New message from Lisa Park", time: "5h ago", unread: false },
-  ];
-
-  const unreadCount = notifications.filter((n) => n.unread).length;
-
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)_/_0.92),hsl(var(--card)_/_0.82))] backdrop-blur-2xl px-6 shadow-[0_14px_34px_hsl(222_36%_8%_/_0.05)]">
+    <header className="sticky top-0 z-30 flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(180deg,hsl(var(--card)_/_0.92),hsl(var(--card)_/_0.82))] px-4 py-3 backdrop-blur-2xl shadow-[0_14px_34px_hsl(222_36%_8%_/_0.05)] md:h-16 md:flex-row md:items-center md:justify-between md:px-6 md:py-0">
       {/* Search */}
-      <div className="relative w-full max-w-lg group">
+      <div className="relative w-full max-w-none group md:max-w-lg">
         <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" />
         <input
           type="text"
           placeholder="Search anything..."
           onFocus={openCommandPalette}
-          className="h-10 w-full rounded-xl border border-border/80 bg-background/72 pl-10 pr-20 text-sm text-foreground placeholder:text-muted-foreground shadow-[inset_0_1px_0_hsl(0_0%_100%_/_0.04)] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-card transition-all"
+          className={cn("h-10 w-full border border-border/80 bg-background/72 pl-10 pr-20 text-foreground placeholder:text-muted-foreground shadow-[inset_0_1px_0_hsl(0_0%_100%_/_0.04)] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-card transition-all", RADIUS.xl, TEXT.body)}
         />
-        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center gap-0.5 rounded-md border border-border/80 bg-secondary/58 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        <kbd className={cn("absolute right-3 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center gap-0.5 border border-border/80 bg-secondary/58 font-medium uppercase tracking-[0.12em] text-muted-foreground", RADIUS.sm, "px-1.5 py-0.5", TEXT.meta)}>
           <Command className="h-2.5 w-2.5" /> K
         </kbd>
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-1.5 ml-4">
+      <div className="flex w-full items-center justify-between gap-1.5 md:ml-4 md:w-auto md:justify-end">
         {canUseQuickCreate ? (
           <button
             onClick={openQuickCreate}
-            className="hidden md:inline-flex items-center gap-2 h-9 rounded-xl bg-primary px-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-foreground transition hover:brightness-105"
+            className={cn("premium-hover inline-flex items-center gap-2 h-9 bg-primary font-semibold uppercase tracking-[0.14em] text-primary-foreground transition hover:brightness-105", RADIUS.xl, "px-3.5", TEXT.eyebrow)}
           >
             <Plus className="h-3.5 w-3.5" />
-            Quick Create
+            <span className="hidden sm:inline">Quick Create</span>
           </button>
         ) : (
-          <div className="hidden md:flex h-9 items-center rounded-xl border border-border/70 bg-secondary/30 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          <div className={cn("flex h-9 items-center border border-border/70 bg-secondary/30 font-semibold uppercase tracking-[0.14em] text-muted-foreground md:hidden", RADIUS.xl, "px-3", TEXT.meta)}>
             Read only
           </div>
         )}
@@ -63,7 +58,7 @@ export default function Navbar() {
         <div className="relative">
           <button
             onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-            className="flex items-center gap-1.5 h-9 rounded-xl border border-border/70 bg-secondary/40 px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-foreground hover:bg-secondary transition-colors"
+            className={cn("premium-hover flex items-center gap-1.5 h-9 border border-border/70 bg-secondary/40 font-semibold uppercase tracking-[0.12em] text-foreground hover:bg-secondary transition-colors", RADIUS.xl, "px-3", TEXT.eyebrow)}
           >
             {role === "admin" && <span>👑</span>}
             <span className="hidden sm:inline">{roleLabels[role].label}</span>
@@ -72,16 +67,25 @@ export default function Navbar() {
           {showRoleSwitcher && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowRoleSwitcher(false)} />
-              <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-card shadow-xl z-50 animate-scale-in overflow-hidden">
+              <div className={cn("absolute right-0 top-full mt-2 w-48 border border-border bg-card shadow-xl z-50 animate-scale-in overflow-hidden", RADIUS.xl)}>
                 <div className="p-2 border-b border-border">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-2">Switch Role</p>
+                  <p className={cn("font-semibold uppercase tracking-wider text-muted-foreground px-2", TEXT.meta)}>Switch Role</p>
                 </div>
                 {(Object.keys(roleLabels) as UserRole[]).map((r) => (
                   <button
                     key={r}
-                    onClick={() => { setRole(r); setShowRoleSwitcher(false); }}
+                    onClick={() => {
+                      setRole(r);
+                      setShowRoleSwitcher(false);
+                      triggerHaptic("success");
+                      toast.success(`Switched to ${roleLabels[r].label}`, {
+                        description: "The workspace updated instantly.",
+                      });
+                    }}
                     className={cn(
-                      "flex w-full items-center gap-2.5 px-4 py-2.5 text-sm transition-colors",
+                      "flex w-full items-center gap-2.5 transition-colors",
+                      SPACING.button,
+                      TEXT.body,
                       r === role ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-secondary/50"
                     )}
                   >
@@ -96,15 +100,16 @@ export default function Navbar() {
         </div>
 
         {/* Theme toggle */}
-        <button onClick={toggleMode} className="flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-secondary/28 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all hover:scale-105">
+        <button onClick={toggleMode} className={cn("premium-hover flex h-9 w-9 items-center justify-center border border-border/70 bg-secondary/28 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all hover:scale-105", RADIUS.xl)}>
           {mode === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
         </button>
 
         {/* Notifications */}
         <div className="relative">
           <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border/70 bg-secondary/28 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all hover:scale-105"
+            onClick={toggleCenter}
+            className={cn("premium-hover relative flex h-9 w-9 items-center justify-center border border-border/70 bg-secondary/28 text-muted-foreground hover:bg-secondary hover:text-foreground transition-all hover:scale-105", RADIUS.xl)}
+            aria-expanded={centerOpen}
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
@@ -113,44 +118,20 @@ export default function Navbar() {
               </span>
             )}
           </button>
-          {showNotifications && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-              <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-border bg-card shadow-xl z-50 animate-scale-in overflow-hidden">
-                <div className="p-4 border-b border-border flex items-center justify-between">
-                  <h3 className="font-display font-semibold text-sm text-foreground">Notifications</h3>
-                  <span className="text-[10px] font-medium bg-primary/10 text-primary rounded-full px-2 py-0.5">{unreadCount} new</span>
-                </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div key={n.id} className={cn("flex items-start gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors border-b border-border last:border-0", n.unread && "bg-primary/[0.03]")}>
-                      <div className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", n.unread ? "bg-primary animate-pulse" : "bg-transparent")} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground">{n.text}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{n.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-3 border-t border-border text-center">
-                  <button className="text-xs text-primary font-medium hover:underline">View all notifications</button>
-                </div>
-              </div>
-            </>
-          )}
+          <NotificationCenter />
         </div>
 
         {/* Profile */}
-        <div className="ml-1 flex items-center gap-3 rounded-2xl border border-border/70 bg-secondary/28 px-3 py-1.5 hover:bg-secondary/50 transition-colors cursor-pointer">
+        <div className={cn("premium-hover ml-1 flex items-center gap-3 border border-border/70 bg-secondary/28 hover:bg-secondary/50 transition-colors cursor-pointer", RADIUS.lg, SPACING.buttonCompact)}>
           <div className="relative">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-info/60 via-accent/45 to-primary/55 shadow-[0_8px_24px_hsl(218_80%_8%_/_0.16)]">
+            <div className={cn("flex h-9 w-9 items-center justify-center bg-gradient-to-br from-info/60 via-accent/45 to-primary/55 shadow-[0_8px_24px_hsl(218_80%_8%_/_0.16)]", RADIUS.pill)}>
               <span className="text-sm font-bold text-foreground">JD</span>
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-card" />
           </div>
           <div className="hidden md:block">
-            <p className="text-sm font-semibold text-foreground leading-tight">John Doe</p>
-            <p className="text-[10px] text-muted-foreground capitalize">{role === "admin" && "👑 "}{roleLabels[role].label}</p>
+            <p className={cn("font-semibold text-foreground leading-tight", TEXT.body)}>John Doe</p>
+            <p className={cn("text-muted-foreground capitalize", TEXT.meta)}>{role === "admin" && "👑 "}{roleLabels[role].label}</p>
           </div>
         </div>
       </div>

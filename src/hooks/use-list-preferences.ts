@@ -39,14 +39,15 @@ export function useListPreferences<T>(
   const order = useMemo(() => normalize(preferences.order, ids), [ids, preferences.order]);
 
   const orderedItems = useMemo(() => {
+    const itemById = new Map(items.map((item) => [getId(item), item] as const));
     const pinnedSet = new Set(pinned);
     const orderedSet = new Set(order);
     const pinnedItems = pinned
-      .map((id) => items.find((item) => getId(item) === id))
+      .map((id) => itemById.get(id))
       .filter((item): item is T => Boolean(item));
     const orderedNonPinned = order
       .filter((id) => !pinnedSet.has(id))
-      .map((id) => items.find((item) => getId(item) === id))
+      .map((id) => itemById.get(id))
       .filter((item): item is T => Boolean(item));
     const remaining = items.filter((item) => {
       const id = getId(item);

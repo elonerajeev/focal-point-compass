@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
 
 type Status = "active" | "pending" | "completed" | "rejected" | "in-progress" | "high" | "medium" | "low";
 
@@ -15,7 +16,7 @@ const statusStyles: Record<Status, string> = {
 
 export default function StatusBadge({ status }: { status: Status }) {
   return (
-    <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold capitalize tracking-[0.02em]", statusStyles[status])}>
+    <span className={cn("inline-flex items-center border font-semibold capitalize tracking-[0.02em]", RADIUS.pill, SPACING.buttonCompact, TEXT.meta, statusStyles[status])}>
       {status.replace("-", " ")}
     </span>
   );

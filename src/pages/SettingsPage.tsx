@@ -3,6 +3,7 @@ import { Palette, Shield, User, Workflow } from "lucide-react";
 
 import PageLoader from "@/components/shared/PageLoader";
 import { useTheme, type ThemeColor, type UserRole } from "@/contexts/ThemeContext";
+import { TEXT } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
 import { useThemePreviews } from "@/hooks/use-crm-data";
 
@@ -28,7 +29,7 @@ export default function SettingsPage() {
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.section variants={item} className="rounded-[1.75rem] border border-border/70 bg-card/90 p-6 shadow-card">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/45 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+          <div className={cn("inline-flex items-center gap-2 rounded-full border border-border/70 bg-secondary/45 px-3 py-1 font-medium text-muted-foreground", TEXT.eyebrow)}>
             <Palette className="h-3.5 w-3.5 text-primary" />
             Settings
           </div>
@@ -58,7 +59,7 @@ export default function SettingsPage() {
             <div>
               <p className="font-display text-xl font-semibold text-foreground">John Doe</p>
               <p className="text-sm text-muted-foreground">john@crmpro.com</p>
-              <p className="mt-1 text-xs font-semibold text-primary">{role}</p>
+              <p className={cn("mt-1 font-semibold text-primary", TEXT.meta)}>{role}</p>
             </div>
           </div>
 
