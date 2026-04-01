@@ -1,0 +1,17 @@
+import rateLimit from "express-rate-limit";
+
+export const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: (req) => req.path === "/health" || req.path === "/api/health",
+});
+
+export const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  skip: (req) => req.path === "/health" || req.path === "/api/health",
+});
