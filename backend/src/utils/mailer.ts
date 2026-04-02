@@ -54,6 +54,7 @@ function getTransporter() {
 
 export async function sendMail(input: SendMailInput) {
   const config = readMailConfig();
+  cachedTransporter = null;
   const transporter = getTransporter();
 
   await transporter.sendMail({
