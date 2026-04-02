@@ -1,0 +1,372 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CandidateActivity {
+  id          Int       @id @default(autoincrement())
+  candidateId Int
+  action      String
+  detail      String?
+  performedBy String
+  createdAt   DateTime  @default(now())
+  Candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model Candidate {
+  id              Int            @id @default(autoincrement())
+  name            String
+  email           String         @unique
+  jobId           Int
+  stage           CandidateStage @default(applied)
+  source          String         @default("Direct")
+  phone           String?
+  resume          String?
+  notes           String?
+  rating          Int            @default(0)
+  interviewDate   DateTime?
+  interviewers    String[]       @default([])
+  joiningDate     String?
+  offeredSalary   String?
+  offerLetterSent Boolean        @default(false)
+  deletedAt       DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime
+  JobPosting      JobPosting     @relation(fields: [jobId], references: [id])
+  activities      CandidateActivity[]
+
+  @@index([deletedAt])
+  @@index([jobId])
+  @@index([stage])
+  @@index([source])
+}
+
+model Client {
+  id          Int           @id @default(autoincrement())
+  name        String
+  email       String        @unique
+  industry    String        @default("General")
+  manager     String        @default("Unassigned")
+  status      ClientStatus  @default(pending)
+  revenue     String        @default("$0")
+  location    String        @default("Unknown")
+  avatar      String
+  tier        ClientTier    @default(Growth)
+  healthScore Int           @default(75)
+  nextAction  String        @default("Initial contact")
+  segment     ClientSegment @default(new_business)
+  companyId   String?
+  jobTitle    String?
+  source      String?
+  assignedTo  String?
+  phone       String        @default("")
+  company     String        @default("")
+  tags        String[]      @default([])
+  deletedAt   DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+
+  @@index([company])
+  @@index([deletedAt])
+  @@index([status])
+  @@index([tier])
+}
+
+model Conversation {
+  id          Int       @id @default(autoincrement())
+  name        String
+  avatar      String
+  lastMessage String
+  time        String
+  unread      Int       @default(0)
+  online      Boolean   @default(false)
+  team        String
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  Message     Message[]
+
+  @@index([deletedAt])
+  @@index([updatedAt])
+}
+
+model Invoice {
+  id        String       @id
+  client    String
+  amount    String
+  date      String
+  due       String
+  status    ClientStatus @default(pending)
+  deletedAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime
+
+  @@index([deletedAt])
+  @@index([status])
+}
+
+model JobPosting {
+  id          Int         @id @default(autoincrement())
+  title       String
+  department  String
+  location    String
+  type        String      @default("Full-time")
+  status      JobStatus   @default(open)
+  description String      @default("")
+  salary      String      @default("Competitive")
+  experience  String      @default("2-5 years")
+  skills      String[]    @default([])
+  views       Int         @default(0)
+  priority    String      @default("normal")
+  deadline    String?
+  deletedAt   DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime
+  Candidate   Candidate[]
+
+  @@index([deletedAt])
+  @@index([status])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  sender         String
+  text           String
+  time           String
+  isMe           Boolean      @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime
+  Conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([deletedAt])
+}
+
+model Note {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String    @default("")
+  isPinned  Boolean   @default(false)
+  color     String    @default("default")
+  authorId  String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+
+  @@index([authorId])
+  @@index([deletedAt])
+}
+
+model Project {
+  id          Int           @id @default(autoincrement())
+  name        String
+  description String        @default("")
+  progress    Int           @default(0)
+  status      ProjectStatus @default(pending)
+  team        String[]      @default([])
+  dueDate     String        @default("")
+  stage       ProjectStage  @default(Discovery)
+  budget      String        @default("$0")
+  tasksDone   Int           @default(0)
+  tasksTotal  Int           @default(0)
+  deletedAt   DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime
+
+  @@index([deletedAt])
+  @@index([stage])
+  @@index([status])
+}
+
+model RefreshToken {
+  id        String    @id
+  userId    String
+  tokenHash String    @unique
+  revokedAt DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Task {
+  id          Int          @id @default(autoincrement())
+  title       String
+  assignee    String
+  avatar      String
+  priority    TaskPriority
+  dueDate     String
+  tags        String[]     @default([])
+  valueStream String
+  column      TaskColumn   @default(todo)
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime
+
+  @@index([column])
+  @@index([deletedAt])
+  @@index([priority])
+}
+
+model TeamMember {
+  id                    Int            @id @default(autoincrement())
+  name                  String
+  email                 String         @unique
+  role                  TeamMemberRole
+  status                ClientStatus   @default(active)
+  avatar                String
+  department            String
+  team                  String
+  designation           String
+  manager               String
+  workingHours          String
+  officeLocation        String
+  timeZone              String
+  baseSalary            Int
+  allowances            Int
+  deductions            Int
+  paymentMode           PaymentMode
+  warningCount          Int            @default(0)
+  suspendedAt           DateTime?
+  terminationEligibleAt DateTime?
+  handoverCompletedAt   DateTime?
+  terminatedAt          DateTime?
+  separationNote        String?
+  attendance            String         @default("present")
+  checkIn               String         @default("-")
+  location              String         @default("-")
+  workload              Int            @default(0)
+  deletedAt             DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime
+
+  @@index([deletedAt])
+  @@index([role])
+  @@index([status])
+}
+
+model User {
+  id             String         @id
+  name           String
+  email          String         @unique
+  passwordHash   String
+  role           UserRole
+  employeeId     String         @unique
+  department     String
+  team           String
+  designation    String
+  manager        String
+  workingHours   String
+  officeLocation String
+  timeZone       String
+  baseSalary     Int
+  allowances     Int
+  deductions     Int
+  paymentMode    PaymentMode
+  payrollCycle   String
+  payrollDueDate String
+  joinedAt       String
+  location       String
+  signatureUrl   String?
+  deletedAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime
+  RefreshToken   RefreshToken[]
+}
+
+model UserPreference {
+  id        String   @id
+  userId    String   @unique
+  data      Json     @default("{}")
+  updatedAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum UserRole {
+  admin
+  manager
+  employee
+  client
+}
+
+enum PaymentMode {
+  bank_transfer
+  cash
+  upi
+}
+
+enum ClientStatus {
+  active
+  pending
+  completed
+}
+
+enum ClientTier {
+  Enterprise
+  Growth
+  Strategic
+}
+
+enum ClientSegment {
+  Expansion
+  Renewal
+  new_business
+}
+
+enum ProjectStatus {
+  active
+  pending
+  completed
+  in_progress
+}
+
+enum ProjectStage {
+  Discovery
+  Build
+  Review
+  Launch
+}
+
+enum TaskPriority {
+  high
+  medium
+  low
+}
+
+enum TaskColumn {
+  todo
+  in_progress
+  done
+}
+
+enum TeamMemberRole {
+  Admin
+  Manager
+  Employee
+}
+
+enum JobStatus {
+  open
+  draft
+  closed
+}
+
+enum CandidateStage {
+  applied
+  screening
+  interview
+  offer
+  hired
+  rejected
+}
