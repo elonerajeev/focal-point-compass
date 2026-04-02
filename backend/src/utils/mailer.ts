@@ -19,7 +19,7 @@ function readMailConfig() {
   const pass = process.env.SMTP_PASS?.trim();
   const from = process.env.SMTP_FROM?.trim();
 
-  if (!host || !port || !from) {
+  if (!host || !port || port <= 0 || !from) {
     throw new AppError(
       "Offer letter email delivery is not configured. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM.",
       500,
