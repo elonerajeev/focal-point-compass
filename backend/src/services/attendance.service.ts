@@ -39,8 +39,20 @@ export const attendanceService = {
     return { data };
   },
 
-  async update(memberId: number, data: { status: AttendanceRecord["status"]; checkIn: string; location: string }) {
-    const member = await prisma.teamMember.update({
+  async update(memberId: number, data: { status: AttendanceRecord["status"]; checkIn: string; location: string }, userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const member = await prisma.teamMember.findUnique({ where: { id: memberId } });
+    
+    if (!member) {
+      throw new Error("Member not found");
+    }
+
+    // Allow only if user is admin/manager or updating their own record
+    if (user?.role !== "admin" && user?.role !== "manager" && member.email !== user?.email) {
+      throw new Error("Unauthorized");
+    }
+
+    const updated = await prisma.teamMember.update({
       where: { id: memberId },
       data: {
         attendance: data.status,
@@ -50,19 +62,19 @@ export const attendanceService = {
     });
 
     return {
-      id: member.id,
-      name: member.name,
-      role: member.role,
-      department: member.department,
-      status: member.attendance as AttendanceRecord["status"],
-      checkIn: member.checkIn,
-      location: member.location,
+      id: updated.id,
+      name: updated.name,
+      role: updated.role,
+      department: updated.department,
+      status: updated.attendance as AttendanceRecord["status"],
+      checkIn: updated.checkIn,
+      location: updated.location,
       note:
-        member.attendance === "absent"
+        updated.attendance === "absent"
           ? "Needs follow-up"
-          : member.attendance === "late"
+          : updated.attendance === "late"
             ? "Late check-in"
-            : member.attendance === "remote"
+            : updated.attendance === "remote"
               ? "Remote today"
               : "On time",
     };

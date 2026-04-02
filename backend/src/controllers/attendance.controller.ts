@@ -11,7 +11,8 @@ export const attendanceController = {
   update: async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
     const { status, checkIn, location } = req.body;
-    const result = await attendanceService.update(Number(id), { status, checkIn, location });
+    const userId = req.auth!.userId;
+    const result = await attendanceService.update(Number(id), { status, checkIn, location }, userId);
     res.status(200).json(result);
   },
 };

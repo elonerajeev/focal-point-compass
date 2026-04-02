@@ -77,8 +77,8 @@ export default function AttendancePage() {
   }, [records]);
 
   const selfRecord = useMemo(() => {
-    return records.find((member) => member.role === "Employee") ?? records[0] ?? null;
-  }, [records]);
+    return records.find((member) => member.name === user?.name) ?? records[0] ?? null;
+  }, [records, user?.name]);
   const liveEmployeeRecord = useMemo(() => findTeamMemberByEmail(sharedTeamMembers, user?.email), [sharedTeamMembers, user?.email]);
 
   const selectedRecord = useMemo(() => {

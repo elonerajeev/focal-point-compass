@@ -54,8 +54,8 @@ systemRouter.patch("/integrations/:id", requireAuth, asyncHandler(async (req: Re
       });
       res.status(201).json(created);
     }
-  } catch {
-    res.status(200).json({ id: req.params.id, status: req.body.status ?? "disconnected" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to persist integration", details: error instanceof Error ? error.message : "Unknown error" });
   }
 }));
 
