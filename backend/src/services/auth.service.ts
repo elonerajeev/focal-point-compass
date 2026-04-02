@@ -47,7 +47,7 @@ function toAuthUser(user: {
 
 function generateEmployeeId(role: UserRole) {
   const prefix = role === "client" ? "CLT" : "EMP";
-  const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+  const suffix = crypto.randomBytes(3).toString("hex").toUpperCase();
   return `${prefix}-${suffix}`;
 }
 
