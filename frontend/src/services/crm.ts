@@ -9,6 +9,8 @@ import type {
   CandidateRecord,
   ClientRecord,
   Company,
+  CreateTeamInput,
+  CreateTeamMemberInput,
   DashboardSnapshot,
   Deal,
   InvoiceRecord,
@@ -20,6 +22,7 @@ import type {
   SalesMetrics,
   TaskColumn,
   TaskRecord,
+  TeamRecord,
   TeamMemberRecord,
   ThemePreview,
 } from "@/types/crm";
@@ -65,6 +68,7 @@ export const crmService = {
 
   getInvoices: () => fetchCollectionApi<InvoiceRecord>("/invoices"),
   getReports: () => fetchCollectionApi("/reports"),
+  getTeams: () => fetchCollectionApi<TeamRecord>("/teams"),
   getTeamMembers: () => fetchCollectionApi<TeamMemberRecord>("/team-members"),
   getAttendance: () => fetchCollectionApi("/attendance"),
   updateAttendance: (memberId: number, data: { status: string; checkIn: string; location: string }) =>
@@ -187,7 +191,17 @@ export const crmService = {
   deleteTask: (taskId: number) => persistApi<void>(`/tasks/${taskId}`, { method: "DELETE" }),
   removeTask: (taskId: number) => crmService.deleteTask(taskId),
 
-  createTeamMember: (member: Omit<TeamMemberRecord, "id">) =>
+  createTeam: (team: CreateTeamInput) =>
+    persistApi<TeamRecord>("/teams", { method: "POST", body: JSON.stringify(team) }),
+  updateTeam: (teamId: number, patch: Partial<CreateTeamInput>) =>
+    persistApi<TeamRecord>(`/teams/${teamId}`, { method: "PATCH", body: JSON.stringify(patch) }),
+  deleteTeam: (teamId: number) => persistApi<void>(`/teams/${teamId}`, { method: "DELETE" }),
+  assignTeamMember: (teamId: number, memberId: number) =>
+    persistApi<{ message: string }>(`/teams/${teamId}/members/${memberId}`, { method: "POST" }),
+  removeTeamMember: (teamId: number, memberId: number) =>
+    persistApi<{ message: string }>(`/teams/${teamId}/members/${memberId}`, { method: "DELETE" }),
+
+  createTeamMember: (member: CreateTeamMemberInput) =>
     persistApi<TeamMemberRecord>("/team-members", { method: "POST", body: JSON.stringify(member) }),
   updateTeamMember: (memberId: number, patch: Partial<TeamMemberRecord>) =>
     persistApi<TeamMemberRecord>(`/team-members/${memberId}`, { method: "PATCH", body: JSON.stringify(patch) }),

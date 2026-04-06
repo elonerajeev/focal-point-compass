@@ -25,7 +25,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const [workflowToOpen, setWorkflowToOpen] = useState<string | null>(null);
   const [editData, setEditData] = useState<any | null>(null);
   const [privacyMode, setPrivacyMode] = useState(false);
-  
+
   const canUseQuickCreate = role === "admin" || role === "manager";
   const togglePrivacyMode = () => setPrivacyMode(v => !v);
 

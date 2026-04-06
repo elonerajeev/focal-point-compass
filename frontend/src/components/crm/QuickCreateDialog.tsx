@@ -5,12 +5,11 @@ import { Building2, CheckCircle2, ClipboardList, CreditCard, FolderKanban, Zap, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useProjects, useClients, crmKeys } from "@/hooks/use-crm-data";
+import { useProjects, useClients, useTeamMembers, crmKeys } from "@/hooks/use-crm-data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { triggerHaptic } from "@/lib/micro-interactions";
 import { crmService } from "@/services/crm";
-import { useSharedTeamMembers } from "@/lib/team-roster";
 
 const workflows = [
   { id: "client",  title: "Client",    description: "Add new client account", icon: Building2,   color: "text-blue-500",   activeBg: "bg-blue-500/10 border-blue-500/30" },
@@ -30,7 +29,6 @@ const priorityOptions = ["high", "medium", "low"];
 
 export default function QuickCreateDialog() {
   const { quickCreateOpen, closeQuickCreate, canUseQuickCreate, workflowToOpen, editData } = useWorkspace();
-  const sharedTeamMembers = useSharedTeamMembers();
   const queryClient = useQueryClient();
   
   const [selected, setSelected] = useState(workflows[0].id);
@@ -111,10 +109,17 @@ export default function QuickCreateDialog() {
 
   const { data: projects = [] } = useProjects({ enabled: quickCreateOpen });
   const { data: clients = [] } = useClients({ enabled: quickCreateOpen });
+  const { data: teamMembers = [] } = useTeamMembers({ enabled: quickCreateOpen });
 
   const selectedWorkflow = useMemo(() => workflows.find(w => w.id === selected) ?? workflows[0], [selected]);
-  const availableTeams = useMemo(() => Array.from(new Set(sharedTeamMembers.map(m => m.team))).filter(Boolean), [sharedTeamMembers]);
-  const availableMembers = useMemo(() => sharedTeamMembers.map(m => ({ value: m.email, label: `${m.name} · ${m.designation}` })), [sharedTeamMembers]);
+  const availableTeams = useMemo(
+    () => Array.from(new Set(teamMembers.map((member) => member.team).filter(Boolean))),
+    [teamMembers],
+  );
+  const availableMembers = useMemo(
+    () => teamMembers.map((member) => ({ value: member.email, label: `${member.name} · ${member.designation}` })),
+    [teamMembers],
+  );
   const clientOptions = useMemo(() => clients.map(c => ({ value: c.id, label: c.name })), [clients]);
 
   const inputCls = "h-10 w-full rounded-xl border border-border/70 bg-background/60 px-3 text-sm text-foreground outline-none transition focus:border-primary focus:ring-1 focus:ring-primary/20";

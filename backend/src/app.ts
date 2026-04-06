@@ -25,15 +25,19 @@ import { projectsRouter } from "./routes/projects.routes";
 import { tasksRouter } from "./routes/tasks.routes";
 import { calendarRouter } from "./routes/calendar.routes";
 import { teamMembersRouter } from "./routes/team-members.routes";
+import { teamsRouter } from "./routes/teams.routes";
 import { payrollRouter } from "./routes/payroll.routes";
 import { systemRouter } from "./routes/system.routes";
 import { uploadRouter } from "./routes/upload.routes";
 import { errorHandler, notFound } from "./middleware/error.middleware";
+import { metricsMiddleware } from "./middleware/metrics.middleware";
+import { prometheusRegistry } from "./utils/metrics";
 import { logger } from "./utils/logger";
 
 export function createApp() {
   const app = express();
 
+  app.set("trust proxy", 1);
   app.use(helmet());
   app.use(compression());
   app.use(
@@ -51,6 +55,7 @@ export function createApp() {
       },
     }),
   );
+  app.use(metricsMiddleware);
   app.use(apiRateLimiter);
 
   app.get(["/health", "/api/health"], (_req, res) => {
@@ -59,6 +64,10 @@ export function createApp() {
       service: "focal-point-compass-backend",
       timestamp: new Date().toISOString(),
     });
+  });
+  app.get(["/metrics", "/api/metrics"], async (_req, res) => {
+    res.set("Content-Type", prometheusRegistry.contentType);
+    res.status(200).send(await prometheusRegistry.metrics());
   });
 
   app.use("/api/auth", authRouter);
@@ -77,6 +86,7 @@ export function createApp() {
   app.use("/api/tasks", tasksRouter);
   app.use("/api/calendar", calendarRouter);
   app.use("/api/team-members", teamMembersRouter);
+  app.use("/api/teams", teamsRouter);
   app.use("/api/invoices", invoicesRouter);
   app.use("/api/payroll", payrollRouter);
   app.use("/api/dashboard", dashboardRouter);

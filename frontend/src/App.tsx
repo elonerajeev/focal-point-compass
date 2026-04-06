@@ -22,6 +22,7 @@ const SignupPage = lazy(() => import("@/pages/SignupPage"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const ActivityPage = lazy(() => import("@/pages/ActivityPage"));
 const TeamPage = lazy(() => import("@/pages/TeamPage"));
+const TeamsPage = lazy(() => import("@/pages/TeamsPage"));
 const EmployeesPage = lazy(() => import("@/pages/TeamPage"));
 const ClientsPage = lazy(() => import("@/pages/ClientsPage"));
 const SalesPage = lazy(() => import("@/pages/SalesPage"));
@@ -106,8 +107,10 @@ const App = () => {
                               <Route path="/overview/activity" element={<RouteAccessGuard><ActivityPage /></RouteAccessGuard>} />
                               <Route path="/overview/messages" element={<RouteAccessGuard><MessagesPage /></RouteAccessGuard>} />
 
-                              <Route path="/people/team" element={<RouteAccessGuard><TeamPage /></RouteAccessGuard>} />
-                              <Route path="/people/employees" element={<RouteAccessGuard><EmployeesPage /></RouteAccessGuard>} />
+                              <Route path="/people/team" element={<Navigate to="/people/teams" replace />} />
+                              <Route path="/people/teams" element={<RouteAccessGuard><TeamsPage /></RouteAccessGuard>} />
+                              <Route path="/people/members" element={<RouteAccessGuard><TeamPage /></RouteAccessGuard>} />
+                              <Route path="/people/employees" element={<Navigate to="/people/members" replace />} />
                               <Route path="/people/attendance" element={<RouteAccessGuard><AttendancePage /></RouteAccessGuard>} />
                               <Route path="/people/roles" element={<Navigate to="/system/access" replace />} />
 
@@ -140,8 +143,10 @@ const App = () => {
                               <Route path="/system/audit" element={<RouteAccessGuard><AuditLogPage /></RouteAccessGuard>} />
 
                               <Route path="/activity" element={<Navigate to="/overview/activity" replace />} />
-                              <Route path="/team" element={<Navigate to="/people/team" replace />} />
-                              <Route path="/employees" element={<Navigate to="/people/employees" replace />} />
+                              <Route path="/team" element={<Navigate to="/people/teams" replace />} />
+                              <Route path="/teams" element={<Navigate to="/people/teams" replace />} />
+                              <Route path="/members" element={<Navigate to="/people/members" replace />} />
+                              <Route path="/employees" element={<Navigate to="/people/members" replace />} />
                               <Route path="/clients" element={<Navigate to="/sales/clients" replace />} />
                               <Route path="/leads" element={<Navigate to="/sales/pipelines" replace />} />
                               <Route path="/deals" element={<Navigate to="/sales/pipelines" replace />} />

@@ -63,10 +63,11 @@ export const sidebarSections: SidebarSection[] = [
   {
     key: "people",
     label: "People",
-    description: "Team and attendance",
+    description: "Teams, members, attendance",
     icon: Users,
     items: [
-      { to: "/people/team", icon: Users, label: "Team", roles: ["admin", "manager"] },
+      { to: "/people/teams", icon: Users, label: "Team", roles: ["admin", "manager"] },
+      { to: "/people/members", icon: UsersRound, label: "Members", roles: ["admin", "manager"] },
       { to: "/people/attendance", icon: UserRoundCheck, label: "Attendance", roles: ["admin", "manager"], badge: "New" },
     ],
   },

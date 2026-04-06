@@ -65,7 +65,6 @@ function mapLead(lead: any): LeadRecord {
     convertedToClientId: lead.convertedToClientId,
     createdAt: lead.createdAt.toISOString(),
     updatedAt: lead.updatedAt.toISOString(),
-    convertedAt: lead.convertedAt?.toISOString() ?? null,
   };
 }
 
@@ -73,7 +72,7 @@ export const leadsService = {
   async list(access?: AccessScope) {
     const where: Prisma.LeadWhereInput = { deletedAt: null };
 
-    // RBAC: Admins/Managers see all; Employees see assigned leads
+    // RBAC: Admins/Managers see all; Employees see assigned leads or team permissions
     if (access?.role === "employee") {
       where.assignedTo = { in: [access.email, access.userId ?? ""] };
     }

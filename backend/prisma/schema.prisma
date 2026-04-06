@@ -218,6 +218,8 @@ model TeamMember {
   avatar                String
   department            String
   team                  String
+  teamId                Int?
+  teamRef               Team?          @relation(fields: [teamId], references: [id], onDelete: SetNull)
   designation           String
   manager               String
   workingHours          String
@@ -244,6 +246,7 @@ model TeamMember {
   @@index([deletedAt])
   @@index([role])
   @@index([status])
+  @@index([teamId])
 }
 
 model User {
@@ -547,4 +550,15 @@ enum PayrollStatus {
   pending
   processed
   paid
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?  @default("")
+  permissions Json     @default("{}") // Object of service permissions, e.g. {"clients": true, "tasks": false}
+  members     TeamMember[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
 }

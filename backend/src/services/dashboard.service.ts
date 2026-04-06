@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma";
 import type { AccessActor } from "../utils/access-control";
 import { getAuditLogs } from "../utils/audit";
+import { teamsService } from "./teams.service";
 import {
   getClientAccessEmail,
   getEmployeeAssigneeScope,
@@ -93,7 +94,16 @@ function buildHeatmap(timestamps: Date[]) {
 }
 
 async function buildStaffDashboard() {
-  const [clientCounts, projectCounts, taskCounts, memberCounts, invoices, members, auditLogs] = await Promise.all([
+  const [
+    clientCounts,
+    projectCounts,
+    taskCounts,
+    invoices,
+    members,
+    auditLogs,
+    teamAttendanceRows,
+    managedTeams,
+  ] = await Promise.all([
     prisma.client.groupBy({
       by: ["status"],
       where: { deletedAt: null },
@@ -106,11 +116,6 @@ async function buildStaffDashboard() {
     }),
     prisma.task.groupBy({
       by: ["column"],
-      where: { deletedAt: null },
-      _count: { _all: true },
-    }),
-    prisma.teamMember.groupBy({
-      by: ["attendance"],
       where: { deletedAt: null },
       _count: { _all: true },
     }),
@@ -131,6 +136,12 @@ async function buildStaffDashboard() {
       select: { id: true, name: true, designation: true, avatar: true, attendance: true, updatedAt: true },
     }),
     getAuditLogs(12),
+    prisma.teamMember.groupBy({
+      by: ["team", "attendance"],
+      where: { deletedAt: null },
+      _count: { _all: true },
+    }),
+    teamsService.list(),
   ]);
 
   const totalClients = clientCounts.reduce((sum, entry) => sum + entry._count._all, 0);
@@ -142,9 +153,6 @@ async function buildStaffDashboard() {
 
   const totalTasks = taskCounts.reduce((sum, entry) => sum + entry._count._all, 0);
   const completedTasks = taskCounts.find((entry) => entry.column === "done")?._count._all ?? 0;
-
-  const totalMembers = memberCounts.reduce((sum, entry) => sum + entry._count._all, 0);
-  const presentMembers = memberCounts.find((entry) => entry.attendance === "present")?._count._all ?? 0;
 
   const totalInvoiceRevenue = invoices.reduce((sum, invoice) => sum + parseAmount(invoice.amount), 0);
 
@@ -184,22 +192,29 @@ async function buildStaffDashboard() {
     return { name: entry.name, value, color: entry.color };
   });
 
-  const jobPostingsCount = await prisma.jobPosting.count({
-    where: { deletedAt: null, status: "open" },
-  });
-  const totalJobPostings = await prisma.jobPosting.count({
-    where: { deletedAt: null },
-  });
+  const attendanceByTeam = new Map<string, { total: number; present: number }>();
+  for (const row of teamAttendanceRows) {
+    const teamName = row.team?.trim() || "General";
+    const bucket = attendanceByTeam.get(teamName) ?? { total: 0, present: 0 };
+    bucket.total += row._count._all;
+    if (row.attendance === "present") {
+      bucket.present += row._count._all;
+    }
+    attendanceByTeam.set(teamName, bucket);
+  }
 
-  const operatingCadence = [
-    { name: "Revenue", value: totalClients > 0 ? Math.round((activeClients / totalClients) * 100) : 0 },
-    { name: "Delivery", value: totalProjects > 0 ? Math.round((activeProjects / totalProjects) * 100) : 0 },
-    { name: "Support", value: totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0 },
-    { name: "Ops", value: totalMembers > 0 ? Math.round((presentMembers / totalMembers) * 100) : 0 },
-    { name: "Hiring", value: totalJobPostings > 0 ? Math.round((jobPostingsCount / totalJobPostings) * 100) : 0 },
-  ];
+  const operatingCadence = managedTeams
+    .map((team) => {
+      const stats = attendanceByTeam.get(team.name) ?? { total: 0, present: 0 };
+      const value = stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0;
+      return { name: team.name, value };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  const executionReadiness = Math.round(operatingCadence.reduce((sum, item) => sum + item.value, 0) / operatingCadence.length);
+  const executionReadiness =
+    operatingCadence.length > 0
+      ? Math.round(operatingCadence.reduce((sum, item) => sum + item.value, 0) / operatingCadence.length)
+      : 0;
   const currentMonthRevenue = revenueSeries[revenueSeries.length - 1]?.revenue ?? 0;
   const previousMonthRevenue = revenueSeries[revenueSeries.length - 2]?.revenue ?? 0;
   const revenueGrowth = previousMonthRevenue > 0

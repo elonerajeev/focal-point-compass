@@ -27,6 +27,7 @@ import PageLoader from "@/components/shared/PageLoader";
 import ShowMoreButton from "@/components/shared/ShowMoreButton";
 import { crmService } from "@/services/crm";
 import { cn } from "@/lib/utils";
+import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import AdminOnly from "@/components/shared/AdminOnly";
@@ -107,27 +108,27 @@ const SalesPage = () => {
 
   const getStageColor = (stage: string) => {
     const colors: Record<string, string> = {
-      "prospecting": "bg-slate-100 text-slate-700",
-      "qualification": "bg-blue-100 text-blue-700",
-      "proposal": "bg-yellow-100 text-yellow-700",
-      "negotiation": "bg-orange-100 text-orange-700",
-      "closed-won": "bg-green-100 text-green-700",
-      "closed-lost": "bg-red-100 text-red-700"
+      "prospecting": "border-border/70 bg-secondary/40 text-muted-foreground",
+      "qualification": "border-primary/20 bg-primary/10 text-primary",
+      "proposal": "border-warning/20 bg-warning/10 text-warning",
+      "negotiation": "border-info/20 bg-info/10 text-info",
+      "closed-won": "border-success/20 bg-success/10 text-success",
+      "closed-lost": "border-destructive/20 bg-destructive/10 text-destructive",
     };
-    return colors[stage] || "bg-gray-100 text-gray-700";
+    return colors[stage] || "border-border/70 bg-secondary/40 text-muted-foreground";
   };
 
   const getLeadStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      "new": "bg-blue-100 text-blue-700",
-      "contacted": "bg-yellow-100 text-yellow-700",
-      "qualified": "bg-green-100 text-green-700",
-      "proposal": "bg-purple-100 text-purple-700",
-      "negotiation": "bg-orange-100 text-orange-700",
-      "won": "bg-green-100 text-green-700",
-      "lost": "bg-red-100 text-red-700"
+      "new": "border-primary/20 bg-primary/10 text-primary",
+      "contacted": "border-warning/20 bg-warning/10 text-warning",
+      "qualified": "border-success/20 bg-success/10 text-success",
+      "proposal": "border-info/20 bg-info/10 text-info",
+      "negotiation": "border-accent/20 bg-accent/10 text-accent",
+      "won": "border-success/20 bg-success/10 text-success",
+      "lost": "border-destructive/20 bg-destructive/10 text-destructive",
     };
-    return colors[status] || "bg-gray-100 text-gray-700";
+    return colors[status] || "border-border/70 bg-secondary/40 text-muted-foreground";
   };
 
   const formatCurrency = (amount: number) => {
@@ -163,12 +164,12 @@ const SalesPage = () => {
       className="space-y-6"
     >
       {/* Header */}
-      <motion.section variants={item} className="rounded-[1.75rem] border border-border bg-card p-6 shadow-card">
+      <motion.section variants={item} className={cn("border border-border/70 bg-card/90", RADIUS.xl, SPACING.card, "shadow-card")}>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary px-3 py-1 font-medium text-muted-foreground text-xs uppercase tracking-[0.16em]">
+            <div className={cn("inline-flex items-center gap-2 border border-border/70 bg-secondary/40 font-medium text-muted-foreground", RADIUS.pill, SPACING.buttonCompact, TEXT.eyebrow)}>
               <DollarSign className="h-3.5 w-3.5 text-primary" />
-              Sales Pipeline
+              Sales Workspace
             </div>
             <div>
               <h1 className="font-display text-3xl font-semibold text-foreground">Sales</h1>
@@ -184,7 +185,7 @@ const SalesPage = () => {
                   variant="outline"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex items-center gap-2 rounded-2xl border-border/70 bg-background/50 font-semibold text-foreground backdrop-blur-sm transition px-4 h-11"
+                  className={cn("inline-flex items-center gap-2 border-border/70 bg-background/50 font-semibold text-foreground backdrop-blur-sm transition", RADIUS.lg, SPACING.button, TEXT.body)}
                 >
                   <RefreshCw className={cn("h-4 w-4 text-primary", isRefreshing && "animate-spin")} />
                   {isRefreshing ? "Refreshing..." : "Refresh Sales"}
@@ -192,7 +193,7 @@ const SalesPage = () => {
               </motion.div>
               <Button 
                 onClick={() => openQuickCreate("lead")}
-                className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 px-5 py-3 text-sm font-semibold text-white shadow-lg transition"
+                className={cn("inline-flex items-center gap-2 bg-primary font-semibold text-primary-foreground shadow-lg transition hover:bg-primary/90", RADIUS.lg, SPACING.button, TEXT.body)}
               >
                 <Plus className="h-4 w-4" />
                 Add Deal
@@ -205,13 +206,13 @@ const SalesPage = () => {
                   variant="outline"
                   onClick={handleRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex items-center gap-2 rounded-2xl border-border/70 bg-background/50 font-semibold text-foreground backdrop-blur-sm transition px-4 h-11"
+                  className={cn("inline-flex items-center gap-2 border-border/70 bg-background/50 font-semibold text-foreground backdrop-blur-sm transition", RADIUS.lg, SPACING.button, TEXT.body)}
                 >
                   <RefreshCw className={cn("h-4 w-4 text-primary", isRefreshing && "animate-spin")} />
                   {isRefreshing ? "Refreshing..." : "Refresh Sales"}
                 </Button>
               </motion.div>
-              <div className="inline-flex items-center rounded-2xl border border-border bg-secondary px-5 py-3 text-sm font-semibold text-muted-foreground">
+              <div className={cn("inline-flex items-center border border-border/70 bg-secondary/30 font-semibold text-muted-foreground", RADIUS.lg, SPACING.button, TEXT.body)}>
                 Read only
               </div>
             </div>
@@ -221,7 +222,7 @@ const SalesPage = () => {
         {/* Sales Metrics */}
         {metrics && (
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-[1.25rem] border border-border/70 bg-secondary/22 p-4">
+            <div className={cn("border border-border/70 bg-background/70 p-4", RADIUS.lg, "shadow-sm")}>
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <DollarSign className="h-5 w-5" />
               </div>
@@ -230,8 +231,8 @@ const SalesPage = () => {
                 {formatCurrency(metrics.pipelineValue)}
               </p>
             </div>
-            <div className="rounded-[1.25rem] border border-border/70 bg-secondary/22 p-4">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <div className={cn("border border-border/70 bg-background/70 p-4", RADIUS.lg, "shadow-sm")}>
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-info/10 text-info">
                 <TrendingUp className="h-5 w-5" />
               </div>
               <p className="text-muted-foreground text-xs uppercase tracking-[0.16em]">Conversion Rate</p>
@@ -239,8 +240,8 @@ const SalesPage = () => {
                 {metrics.conversionRate}%
               </p>
             </div>
-            <div className="rounded-[1.25rem] border border-border/70 bg-secondary/22 p-4">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <div className={cn("border border-border/70 bg-background/70 p-4", RADIUS.lg, "shadow-sm")}>
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-success/10 text-success">
                 <Users className="h-5 w-5" />
               </div>
               <p className="text-muted-foreground text-xs uppercase tracking-[0.16em]">Deals Won</p>
@@ -248,8 +249,8 @@ const SalesPage = () => {
                 {metrics.dealsWon}
               </p>
             </div>
-            <div className="rounded-[1.25rem] border border-border/70 bg-secondary/22 p-4">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <div className={cn("border border-border/70 bg-background/70 p-4", RADIUS.lg, "shadow-sm")}>
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-warning/10 text-warning">
                 <Calendar className="h-5 w-5" />
               </div>
               <p className="text-muted-foreground text-xs uppercase tracking-[0.16em]">Avg. Sales Cycle</p>
@@ -262,17 +263,17 @@ const SalesPage = () => {
       </motion.section>
 
       {/* Tabs and Filters */}
-      <motion.section variants={item} className="rounded-[1.75rem] border border-border bg-card p-6 shadow-card">
+      <motion.section variants={item} className={cn("border border-border/70 bg-card/90", RADIUS.xl, SPACING.card, "shadow-card")}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2">
             <Button
               variant={activeTab === "pipeline" ? "default" : "outline"}
               onClick={() => setActiveTab("pipeline")}
               className={cn(
-                "rounded-xl transition-all",
-                activeTab === "pipeline" 
-                  ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md" 
-                  : "border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                "rounded-2xl transition-all",
+                activeTab === "pipeline"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "border-border/70 bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
               )}
             >
               Pipeline
@@ -281,10 +282,10 @@ const SalesPage = () => {
               variant={activeTab === "leads" ? "default" : "outline"}
               onClick={() => setActiveTab("leads")}
               className={cn(
-                "rounded-xl transition-all",
-                activeTab === "leads" 
-                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md" 
-                  : "border-orange-200 text-orange-700 hover:bg-orange-50"
+                "rounded-2xl transition-all",
+                activeTab === "leads"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "border-border/70 bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
               )}
             >
               Leads
@@ -298,12 +299,12 @@ const SalesPage = () => {
                 placeholder={activeTab === "pipeline" ? "Search deals..." : "Search leads..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
+                className="pl-10 w-64 rounded-2xl border-border/70 bg-background/60"
               />
             </div>
             {activeTab === "pipeline" && (
               <Select value={stageFilter} onValueChange={setStageFilter}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-40 rounded-2xl border-border/70 bg-background/60">
                   <SelectValue placeholder="All Stages" />
                 </SelectTrigger>
                 <SelectContent>
@@ -327,30 +328,36 @@ const SalesPage = () => {
               {filteredDeals.length > 0 ? (
                 <>
                 {filteredDeals.slice(0, visibleDealsCount).map((deal) => (
-                  <Card key={deal.id} className="rounded-xl border-border/50 hover:shadow-md transition-shadow">
+                  <Card key={deal.id} className="rounded-[1.5rem] border-border/70 bg-background/70 shadow-card transition hover:border-border">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-foreground">{deal.title}</h3>
-                            <Badge className={getStageColor(deal.stage)}>
-                              {deal.stage.replace('-', ' ')}
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 className="font-display text-lg font-semibold text-foreground">{deal.title}</h3>
+                            <Badge className={cn("border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]", getStageColor(deal.stage))}>
+                              {deal.stage.replace("-", " ")}
                             </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {deal.probability}% probability
-                            </span>
+                            <span className="text-xs text-muted-foreground">{deal.probability}% probability</span>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">{deal.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="font-semibold text-foreground">
-                              {formatCurrency(deal.value)}
-                            </span>
-                            <span>Expected: {new Date(deal.expectedCloseDate).toLocaleDateString()}</span>
-                            {deal.tags?.map(tag => (
-                              <Badge key={tag} variant="outline" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
+                          {deal.description && (
+                            <p className="text-sm text-muted-foreground mb-3">{deal.description}</p>
+                          )}
+                          <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                            <div>
+                              <p className={cn(TEXT.eyebrow, "text-muted-foreground")}>Deal Value</p>
+                              <p className="font-semibold text-foreground">{formatCurrency(deal.value)}</p>
+                            </div>
+                            <div>
+                              <p className={cn(TEXT.eyebrow, "text-muted-foreground")}>Expected Close</p>
+                              <p className="font-semibold text-foreground">{new Date(deal.expectedCloseDate).toLocaleDateString()}</p>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {deal.tags?.map(tag => (
+                                <Badge key={tag} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         </div>
                         <DropdownMenu>
@@ -398,7 +405,7 @@ const SalesPage = () => {
                 />
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-border/60 bg-secondary/10">
                   <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
                   <p className="text-lg font-medium text-foreground">No deals found</p>
                   <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
@@ -415,25 +422,34 @@ const SalesPage = () => {
               {filteredLeads.length > 0 ? (
                 <>
                 {filteredLeads.slice(0, visibleLeadsCount).map((lead) => (
-                  <Card key={lead.id} className="rounded-xl border-border/50 hover:shadow-md transition-shadow">
+                  <Card key={lead.id} className="rounded-[1.5rem] border-border/70 bg-background/70 shadow-card transition hover:border-border">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="font-semibold text-foreground">
+                            <h3 className="font-display text-lg font-semibold text-foreground">
                               {lead.firstName} {lead.lastName}
                             </h3>
-                            <Badge className={getLeadStatusColor(lead.status)}>
+                            <Badge className={cn("border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]", getLeadStatusColor(lead.status))}>
                               {lead.status}
                             </Badge>
-                            <span className="text-sm text-muted-foreground">
-                              Score: {lead.score}
-                            </span>
+                            <span className="text-xs text-muted-foreground">Score: {lead.score}</span>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{lead.company}</span>
-                            <span>{lead.jobTitle}</span>
-                            <span>{lead.email}</span>
+                          <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                            <div>
+                              <p className={cn(TEXT.eyebrow, "text-muted-foreground")}>Company</p>
+                              <p className="font-semibold text-foreground">{lead.company}</p>
+                            </div>
+                            <div>
+                              <p className={cn(TEXT.eyebrow, "text-muted-foreground")}>Role</p>
+                              <p className="font-semibold text-foreground">{lead.jobTitle}</p>
+                            </div>
+                            <div>
+                              <p className={cn(TEXT.eyebrow, "text-muted-foreground")}>Contact</p>
+                              <p className="font-semibold text-foreground">{lead.email}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3">
                             <Badge variant="outline" className="text-xs">
                               {lead.source}
                             </Badge>
@@ -489,7 +505,7 @@ const SalesPage = () => {
                 />
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-border/60 bg-secondary/10">
                   <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
                   <p className="text-lg font-medium text-foreground">No leads found</p>
                   <p className="text-sm text-muted-foreground">Try adjusting your search.</p>

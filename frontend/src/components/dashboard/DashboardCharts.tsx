@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { ClientRecord } from "@/types/crm";
 
 const ACCOUNTS_PAGE_SIZE = 4;
+const CADENCE_PAGE_SIZE = 4;
 
 type DashboardChartsProps = {
   revenueSeries: Array<{ month: string; revenue: number; deals: number; retention: number }>;
@@ -28,9 +29,9 @@ export default function DashboardCharts({
   atRiskClients,
 }: DashboardChartsProps) {
   const [selectedStage, setSelectedStage] = useState(pipelineBreakdown[0] ?? null);
-  const [selectedCadence, setSelectedCadence] = useState(operatingCadence[0] ?? null);
   const [visibleFocusCount, setVisibleFocusCount] = useState(4);
   const [visibleRiskCount, setVisibleRiskCount] = useState(4);
+  const [visibleCadenceCount, setVisibleCadenceCount] = useState(CADENCE_PAGE_SIZE);
 
   const totalPipeline = useMemo(
     () => pipelineBreakdown.reduce((sum, stage) => sum + stage.value, 0),
@@ -214,19 +215,36 @@ export default function DashboardCharts({
             </div>
             <Zap className="h-5 w-5 text-primary" />
           </div>
-          <SimpleBarChart
-            items={operatingCadence}
-            selectedIndex={selectedCadence ? operatingCadence.findIndex((item) => item.name === selectedCadence.name) : 0}
-            onSelect={(index) => setSelectedCadence(operatingCadence[index] ?? operatingCadence[0] ?? null)}
-          />
-          {selectedCadence && (
-            <div className={cn("mt-4 border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-foreground">{selectedCadence.name}</p>
-                <p className={cn("font-semibold text-foreground", TEXT.body)}>{selectedCadence.value}%</p>
-              </div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-[linear-gradient(90deg,hsl(var(--primary)),hsl(var(--accent)))]" style={{ width: `${selectedCadence.value}%` }} />
+          {operatingCadence.length > 0 ? (
+            <div className="space-y-3">
+              {operatingCadence.slice(0, visibleCadenceCount).map((item) => (
+                <div key={item.name} className={cn("border border-border/60 bg-secondary/15", RADIUS.lg, SPACING.inset)}>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-foreground">{item.name}</p>
+                    <p className={cn("font-semibold text-foreground", TEXT.body)}>{item.value}%</p>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,hsl(var(--primary)),hsl(var(--accent)))]"
+                      style={{ width: `${item.value}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <ShowMoreButton
+                total={operatingCadence.length}
+                visible={visibleCadenceCount}
+                pageSize={CADENCE_PAGE_SIZE}
+                onShowMore={() => setVisibleCadenceCount(v => Math.min(v + CADENCE_PAGE_SIZE, operatingCadence.length))}
+                onShowLess={() => setVisibleCadenceCount(CADENCE_PAGE_SIZE)}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center rounded-2xl border border-dashed border-border/60 bg-secondary/10 p-6 text-center">
+              <div>
+                <Clock3 className="mx-auto mb-2 h-6 w-6 text-muted-foreground/50" />
+                <p className="text-sm font-semibold text-foreground">No teams available</p>
+                <p className="mt-1 text-xs text-muted-foreground">Create teams to track cross-team cadence</p>
               </div>
             </div>
           )}

@@ -76,10 +76,95 @@ services:
           memory: 256M
           cpus: '0.25'
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.external-url=/prometheus"
+      - "--web.route-prefix=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus_data:/prometheus
+    expose:
+      - "9090"
+    networks:
+      - crm-network
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    restart: unless-stopped
+    environment:
+      GF_SERVER_HTTP_PORT: 3000
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    expose:
+      - "3000"
+    networks:
+      - crm-network
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:3.1.1
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    expose:
+      - "3100"
+    networks:
+      - crm-network
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    networks:
+      - crm-network
+    depends_on:
+      - loki
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    expose:
+      - "9093"
+    networks:
+      - crm-network
+    depends_on:
+      - prometheus
+
 networks:
   crm-network:
     driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  loki_data:
     driver: local

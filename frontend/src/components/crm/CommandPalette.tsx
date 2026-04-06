@@ -79,7 +79,7 @@ export default function CommandPalette() {
     clients.slice(0, 10).forEach(c => entries.push({ id: `c-${c.id}`, title: c.name, description: `${c.industry} · ${c.tier} · ${c.status}`, type: "client", route: "/sales/clients" }));
     projects.slice(0, 8).forEach(p => entries.push({ id: `p-${p.id}`, title: p.name, description: `${p.stage} · ${p.progress}% complete`, type: "project", route: "/workspace/projects" }));
     [...tasks.todo, ...tasks["in-progress"], ...tasks.done].slice(0, 10).forEach(t => entries.push({ id: `t-${t.id}`, title: t.title, description: `${t.priority} · ${t.assignee}`, type: "task", route: "/workspace/tasks" }));
-    teamMembers.slice(0, 8).forEach(m => entries.push({ id: `m-${m.id}`, title: m.name, description: `${m.designation} · ${m.department}`, type: "member", route: "/people/team" }));
+    teamMembers.slice(0, 8).forEach(m => entries.push({ id: `m-${m.id}`, title: m.name, description: `${m.designation} · ${m.department}`, type: "member", route: "/people/members" }));
 
     return entries;
   }, [canUseQuickCreate, clients, projects, tasks, teamMembers]);

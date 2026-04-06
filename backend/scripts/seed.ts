@@ -16,6 +16,7 @@ import { clientsService } from "../src/services/clients.service";
 import { projectsService } from "../src/services/projects.service";
 import { tasksService } from "../src/services/tasks.service";
 import { teamMembersService } from "../src/services/team-members.service";
+import { teamsService } from "../src/services/teams.service";
 import { invoicesService } from "../src/services/invoices.service";
 import { notesService } from "../src/services/notes.service";
 import { conversationSeedRecords, messageSeedRecords } from "../src/data/crm-static";
@@ -39,6 +40,7 @@ async function wipeExistingData() {
     prisma.note.deleteMany({}),
     prisma.invoice.deleteMany({}),
     prisma.teamMember.deleteMany({}),
+    prisma.userPreference.deleteMany({ where: { userId: "system:teams" } }),
     prisma.task.deleteMany({}),
     prisma.project.deleteMany({}),
     prisma.client.deleteMany({}),
@@ -118,15 +120,21 @@ async function seedTasks() {
 
 async function seedTeamMembers() {
   const members = [
-    { name: "Sarah Johnson", email: "sarah@crmpro.com", role: "Admin" as const, status: "active" as const, avatar: "SJ", department: "Sales", team: "Revenue Ops", designation: "Admin Lead", manager: "Executive Team", workingHours: "09:30 - 18:30", officeLocation: "HQ - Floor 3", timeZone: "Asia/Calcutta", baseSalary: 145000, allowances: 22000, deductions: 7800, paymentMode: "bank_transfer" as const, attendance: "present" as const, checkIn: "8:42 AM", location: "HQ - Floor 3", workload: 82 },
-    { name: "Mike Chen", email: "mike@crmpro.com", role: "Manager" as const, status: "active" as const, avatar: "MC", department: "Engineering", team: "Platform", designation: "Engineering Manager", manager: "Director of Engineering", workingHours: "10:00 - 19:00", officeLocation: "Remote Hub", timeZone: "Asia/Calcutta", baseSalary: 128000, allowances: 18000, deductions: 6500, paymentMode: "bank_transfer" as const, attendance: "remote" as const, checkIn: "9:05 AM", location: "Remote", workload: 68 },
+    { name: "Sarah Johnson", email: "sarah@crmpro.com", role: "Admin" as const, status: "active" as const, avatar: "SJ", department: "Sales", team: "Revenue Ops", designation: "Admin Lead", manager: "Executive Team", workingHours: "09:30 - 18:30", officeLocation: "HQ - Floor 3", timeZone: "Asia/Calcutta", baseSalary: 145000, allowances: 22000, deductions: 7800, paymentMode: "bank-transfer" as const, attendance: "present" as const, checkIn: "8:42 AM", location: "HQ - Floor 3", workload: 82 },
+    { name: "Mike Chen", email: "mike@crmpro.com", role: "Manager" as const, status: "active" as const, avatar: "MC", department: "Engineering", team: "Platform", designation: "Engineering Manager", manager: "Director of Engineering", workingHours: "10:00 - 19:00", officeLocation: "Remote Hub", timeZone: "Asia/Calcutta", baseSalary: 128000, allowances: 18000, deductions: 6500, paymentMode: "bank-transfer" as const, attendance: "remote" as const, checkIn: "9:05 AM", location: "Remote", workload: 68 },
     { name: "Emily Davis", email: "emily@crmpro.com", role: "Employee" as const, status: "active" as const, avatar: "ED", department: "Marketing", team: "Growth", designation: "Marketing Specialist", manager: "Growth Lead", workingHours: "09:00 - 18:00", officeLocation: "HQ - Floor 2", timeZone: "Asia/Calcutta", baseSalary: 72000, allowances: 12000, deductions: 3200, paymentMode: "upi" as const, attendance: "late" as const, checkIn: "9:27 AM", location: "HQ - Floor 2", workload: 74 },
-    { name: "James Wilson", email: "james@crmpro.com", role: "Manager" as const, status: "pending" as const, avatar: "JW", department: "Support", team: "Customer Care", designation: "Support Manager", manager: "Head of Support", workingHours: "09:30 - 18:30", officeLocation: "HQ - Floor 1", timeZone: "Asia/Calcutta", baseSalary: 98000, allowances: 14000, deductions: 4500, paymentMode: "bank_transfer" as const, attendance: "present" as const, checkIn: "8:58 AM", location: "HQ - Floor 1", workload: 58 },
+    { name: "James Wilson", email: "james@crmpro.com", role: "Manager" as const, status: "pending" as const, avatar: "JW", department: "Support", team: "Customer Care", designation: "Support Manager", manager: "Head of Support", workingHours: "09:30 - 18:30", officeLocation: "HQ - Floor 1", timeZone: "Asia/Calcutta", baseSalary: 98000, allowances: 14000, deductions: 4500, paymentMode: "bank-transfer" as const, attendance: "present" as const, checkIn: "8:58 AM", location: "HQ - Floor 1", workload: 58 },
     { name: "Lisa Park", email: "lisa@crmpro.com", role: "Employee" as const, status: "active" as const, avatar: "LP", department: "Design", team: "Creative", designation: "Product Designer", manager: "Design Lead", workingHours: "09:15 - 18:15", officeLocation: "Remote", timeZone: "Asia/Calcutta", baseSalary: 68000, allowances: 11000, deductions: 2800, paymentMode: "cash" as const, attendance: "remote" as const, checkIn: "9:11 AM", location: "Remote", workload: 61 },
     { name: "Tom Anderson", email: "tom@crmpro.com", role: "Employee" as const, status: "pending" as const, avatar: "TA", department: "Sales", team: "Outbound", designation: "Sales Associate", manager: "Sales Manager", workingHours: "09:00 - 18:00", officeLocation: "No check-in", timeZone: "Asia/Calcutta", baseSalary: 52000, allowances: 9000, deductions: 2400, paymentMode: "cash" as const, attendance: "absent" as const, checkIn: "-", location: "No check-in", workload: 39 },
     { name: "Nina Brown", email: "nina@crmpro.com", role: "Employee" as const, status: "active" as const, avatar: "NB", department: "Operations", team: "Process", designation: "Operations Specialist", manager: "Operations Lead", workingHours: "09:00 - 18:00", officeLocation: "HQ - Floor 2", timeZone: "Asia/Calcutta", baseSalary: 61000, allowances: 10000, deductions: 2600, paymentMode: "upi" as const, attendance: "present" as const, checkIn: "8:54 AM", location: "HQ - Floor 2", workload: 55 },
-    { name: "Owen Clark", email: "owen@crmpro.com", role: "Employee" as const, status: "active" as const, avatar: "OC", department: "Delivery", team: "Implementation", designation: "Product Specialist", manager: "Team Manager", workingHours: "09:00 - 18:00", officeLocation: "HQ - Floor 2", timeZone: "Asia/Calcutta", baseSalary: 70000, allowances: 10500, deductions: 3000, paymentMode: "bank_transfer" as const, attendance: "present" as const, checkIn: "9:02 AM", location: "HQ - Floor 2", workload: 66 },
+    { name: "Owen Clark", email: "owen@crmpro.com", role: "Employee" as const, status: "active" as const, avatar: "OC", department: "Delivery", team: "Implementation", designation: "Product Specialist", manager: "Team Manager", workingHours: "09:00 - 18:00", officeLocation: "HQ - Floor 2", timeZone: "Asia/Calcutta", baseSalary: 70000, allowances: 10500, deductions: 3000, paymentMode: "bank-transfer" as const, attendance: "present" as const, checkIn: "9:02 AM", location: "HQ - Floor 2", workload: 66 },
   ] as const;
+
+  const teamNames = Array.from(new Set(members.map((member) => member.team.trim()).filter(Boolean)))
+    .filter((name) => name.toLowerCase() !== "general");
+  for (const name of teamNames) {
+    await teamsService.create({ name });
+  }
 
   for (const member of members) {
     await teamMembersService.create(member);

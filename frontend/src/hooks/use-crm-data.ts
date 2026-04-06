@@ -15,6 +15,7 @@ export const crmKeys = {
   messages: ["crm", "messages"] as const,
   invoices: ["crm", "invoices"] as const,
   reports: ["crm", "reports"] as const,
+  teams: ["crm", "teams"] as const,
   teamMembers: ["crm", "team-members"] as const,
   attendance: ["crm", "attendance"] as const,
   commands: ["crm", "commands"] as const,
@@ -105,6 +106,15 @@ export function useReports() {
     queryKey: crmKeys.reports,
     queryFn: crmService.getReports,
     staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useTeams(options?: QueryToggle) {
+  return useQuery({
+    queryKey: crmKeys.teams,
+    queryFn: crmService.getTeams,
+    staleTime: 1000 * 60 * 5,
+    enabled: options?.enabled,
   });
 }
 
