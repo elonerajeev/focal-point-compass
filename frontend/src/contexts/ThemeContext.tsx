@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useMemo, useState, useEffect } from "react";
+import { isRemoteApiEnabled } from "@/lib/api-client";
 import { readStoredJSON, readStoredString, removeStoredValue, writeStoredString } from "@/lib/preferences";
 import { crmService } from "@/services/crm";
 
@@ -415,6 +416,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Sync with backend on mount
   useEffect(() => {
+    if (!isRemoteApiEnabled()) {
+      const storedUser = readStoredJSON<{ role?: UserRole }>("crm-auth-user", null);
+      if (storedUser?.role) setRoleState(storedUser.role as UserRole);
+      return;
+    }
+
     let mounted = true;
     const syncPreferences = async () => {
       try {

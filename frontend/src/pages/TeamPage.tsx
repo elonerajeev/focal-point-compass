@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-import PageLoader from "@/components/shared/PageLoader";
+import { TeamPageSkeleton } from "@/components/skeletons";
 import ErrorFallback from "@/components/shared/ErrorFallback";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
+import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
 import { useTeamMembers, useTeams, crmKeys } from "@/hooks/use-crm-data";
 import { crmService } from "@/services/crm";
 import ShowMoreButton from "@/components/shared/ShowMoreButton";
@@ -18,6 +19,8 @@ import { PrivacyValue } from "@/components/shared/PrivacyValue";
 import { useListPreferences } from "@/hooks/use-list-preferences";
 import { normalizeTeamMember } from "@/lib/team-roster";
 import type { TeamMemberRecord } from "@/types/crm";
+import { useRefresh } from "@/hooks/use-refresh";
+import { getRefreshMessage, getRefreshSuccessMessage } from "@/lib/refresh-messages";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 
 const roleTone: Record<string, string> = {
@@ -87,9 +90,9 @@ function normalizeMember(member: TeamMemberRecord): TeamMemberRecord {
 }
 
 export default function TeamPage() {
-  const navigate = useNavigate();
   const { data: members = [], isLoading, error: teamError, refetch: refetchTeamMembers } = useTeamMembers();
   const { data: teams = [], isLoading: teamsLoading } = useTeams();
+  const { refresh, isRefreshing } = useRefresh();
 
   // Productivity metrics calculation
   const productivityMetrics = useMemo(() => {
@@ -214,38 +217,17 @@ export default function TeamPage() {
   });
 
   const handleRefresh = async () => {
-    const start = Date.now();
-    await refetchTeamMembers();
-    const duration = Date.now() - start;
-    if (duration < 600) await new Promise(r => setTimeout(r, 600 - duration));
+    await refresh(
+      () => refetchTeamMembers(),
+      {
+        message: getRefreshMessage("team"),
+        successMessage: getRefreshSuccessMessage("team"),
+      }
+    );
   };
 
   const handleExportCSV = () => {
-    if (!normalizedMembers.length) return;
-    const headers = ["ID", "Name", "Email", "Role", "Department", "Designation", "Team", "Manager", "Salary", "Location", "Attendance"];
-    const rows = normalizedMembers.map(m => [
-      m.id,
-      m.name,
-      m.email,
-      m.role,
-      m.department,
-      m.designation,
-      m.team,
-      m.manager,
-      m.baseSalary,
-      m.officeLocation,
-      m.attendance,
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(","), ...rows.map(r => r.map(v => String(v).replace(/,/g, "")).join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `crm_team_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Team CSV export started");
+    window.open("/api/system/export/team-members/csv", "_blank");
   };
 
   const getMemberId = useCallback((member: TeamMemberRecord) => String(member.id), []);
@@ -507,7 +489,7 @@ export default function TeamPage() {
   const visibleActions = actionSets[role];
 
   if (isLoading) {
-    return <PageLoader />;
+    return <TeamPageSkeleton />;
   }
   if (teamError) {
     return (
@@ -545,11 +527,11 @@ export default function TeamPage() {
                   <Button
                     variant="outline"
                     onClick={handleRefresh}
-                    disabled={isLoading}
-                    className="inline-flex h-11 items-center gap-2 rounded-2xl border-border/70 bg-background/50 px-4 font-semibold text-foreground backdrop-blur-sm transition transition h-11"
+                    disabled={isRefreshing}
+                    className="inline-flex h-11 items-center gap-2 rounded-2xl border-border/70 bg-background/50 px-4 font-semibold text-foreground backdrop-blur-sm transition"
                   >
-                    <RefreshCw className={cn("h-4 w-4 text-primary", isLoading && "animate-spin")} />
-                    {isLoading ? "Refreshing..." : "Refresh Members"}
+                    <RefreshCw className={cn("h-4 w-4 text-primary", isRefreshing && "animate-spin")} />
+                    "Refresh Members"
                   </Button>
                 </motion.div>
                 

@@ -262,7 +262,7 @@ export const candidatesService = {
     });
   },
 
-  async moveToNextStage(candidateId: number) {
+  async moveToNextStage(candidateId: number, access?: { userId: string; role: string; email?: string }) {
     const existing = await prisma.candidate.findUnique({ 
       where: { id: candidateId },
       include: { JobPosting: true },
@@ -349,10 +349,15 @@ export const candidatesService = {
 
     // Send hire email automatically when candidate is hired
     if (nextStage === "hired") {
-      // Get HR details (assuming current user is HR)
-      // For now, use placeholder HR details
-      const hrName = "HR Manager";
-      const hrDesignation = "Human Resources";
+      const actingUser = access?.userId
+        ? await prisma.user.findUnique({
+            where: { id: access.userId },
+            select: { name: true, designation: true, email: true },
+          })
+        : null;
+
+      const hrName = actingUser?.name || access?.email || "Hiring Team";
+      const hrDesignation = actingUser?.designation || "Hiring Team";
 
       sendHireEmail({
         name: result.name,

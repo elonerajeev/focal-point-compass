@@ -12,13 +12,15 @@ import {
   BarChart, Bar,
 } from "recharts";
 
-import PageLoader from "@/components/shared/PageLoader";
+import { AnalyticsSkeleton } from "@/components/skeletons";
 import ErrorFallback from "@/components/shared/ErrorFallback";
 import AdminOnly from "@/components/shared/AdminOnly";
 import { useClients, useProjects, useInvoices, useTeamMembers } from "@/hooks/use-crm-data";
 import { crmService } from "@/services/crm";
 import { TEXT } from "@/lib/design-tokens";
 import { cn } from "@/lib/utils";
+import { useRefresh } from "@/hooks/use-refresh";
+import { getRefreshMessage, getRefreshSuccessMessage } from "@/lib/refresh-messages";
 
 const PIE_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
@@ -45,14 +47,18 @@ function AnalyticsPageInner() {
     queryFn: crmService.getAnalytics,
   });
 
+  const { refresh, isRefreshing } = useRefresh();
+
   const isLoading = clientsLoading || projectsLoading || invoicesLoading || teamLoading || analyticsLoading;
 
   const handleRefresh = async () => {
-    const start = Date.now();
-    await Promise.all([refetchClients(), refetchProjects(), refetchInvoices(), refetchTeam(), refetchAnalytics()]);
-    const elapsed = Date.now() - start;
-    if (elapsed < 600) await new Promise(r => setTimeout(r, 600 - elapsed));
-    toast.success("Analytics refreshed");
+    await refresh(
+      () => Promise.all([refetchClients(), refetchProjects(), refetchInvoices(), refetchTeam(), refetchAnalytics()]),
+      {
+        message: getRefreshMessage("analytics"),
+        successMessage: getRefreshSuccessMessage("analytics"),
+      }
+    );
   };
 
   // ── Derived stats from local data (always available) ──
@@ -90,7 +96,7 @@ function AnalyticsPageInner() {
     return Object.entries(counts).map(([status, count]) => ({ name: status, value: count }));
   }, [invoices]);
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <AnalyticsSkeleton />;
 
   if (clientsError) {
     return (
@@ -129,10 +135,11 @@ function AnalyticsPageInner() {
             <button
               type="button"
               onClick={handleRefresh}
-              className="inline-flex h-11 w-fit items-center gap-2 rounded-2xl border border-border/70 bg-background/50 px-4 text-sm font-semibold text-foreground backdrop-blur-sm transition hover:bg-secondary"
+              disabled={isRefreshing}
+              className="inline-flex h-11 w-fit items-center gap-2 rounded-2xl border border-border/70 bg-background/50 px-4 text-sm font-semibold text-foreground backdrop-blur-sm transition hover:bg-secondary disabled:opacity-50"
             >
-              <RefreshCw className="h-4 w-4 text-primary" />
-              Refresh
+              <RefreshCw className={cn("h-4 w-4 text-primary", isRefreshing && "animate-spin")} />
+              "Refresh"
             </button>
           </div>
 

@@ -92,16 +92,16 @@ describe('TeamsPage', () => {
   })
 
   it('shows loading state', () => {
-    vi.mocked(useTeams).mockReturnValue({
+    (useTeams as Mock).mockReturnValue({
       data: [],
       isLoading: true,
-      isFetching: false,
       error: null,
       refetch: vi.fn(),
     } as unknown as ReturnType<typeof useTeams>)
 
     render(<TeamsPage />)
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+    // Check for skeleton elements instead of loading text
+    expect(document.querySelectorAll('.shimmer-skeleton').length).toBeGreaterThan(0)
   })
 
   it('renders search input', () => {

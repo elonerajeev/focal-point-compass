@@ -25,6 +25,17 @@ export function signRefreshToken(payload: TokenPayload) {
   });
 }
 
+export function signPasswordResetToken(payload: TokenPayload) {
+  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
+    expiresIn: "1h",
+    jwtid: crypto.randomBytes(16).toString("hex"),
+  });
+}
+
+export function verifyPasswordResetToken(token: string) {
+  return jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload & jwt.JwtPayload;
+}
+
 export function verifyAccessToken(token: string) {
   return jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload & jwt.JwtPayload;
 }

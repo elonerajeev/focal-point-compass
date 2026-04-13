@@ -4,7 +4,7 @@ import { FileText, RefreshCw, Search, Shield, User } from "lucide-react";
 import { crmService } from "@/services/crm";
 import { cn } from "@/lib/utils";
 import { TEXT } from "@/lib/design-tokens";
-import PageLoader from "@/components/shared/PageLoader";
+import { AuditLogSkeleton } from "@/components/skeletons";
 import ShowMoreButton from "@/components/shared/ShowMoreButton";
 import {
   Table,
@@ -99,7 +99,7 @@ export default function AuditLogPage() {
   );
 
   if (isLoading) {
-    return <PageLoader />;
+    return <AuditLogSkeleton />;
   }
 
   return (

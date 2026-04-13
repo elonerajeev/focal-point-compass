@@ -6,7 +6,7 @@ import { AppError } from "../middleware/error.middleware";
 import { buildProfile } from "../utils/employee-profile";
 import { fromDbPaymentMode, toDbPaymentMode } from "../utils/payment-mode";
 import { comparePassword, hashPassword } from "../utils/password";
-import { hashToken, signAccessToken, signRefreshToken, verifyRefreshToken, type TokenPayload } from "../utils/jwt";
+import { hashToken, signAccessToken, signRefreshToken, signPasswordResetToken, verifyPasswordResetToken, verifyRefreshToken, type TokenPayload } from "../utils/jwt";
 import { sendWelcomeEmail, sendVerificationEmail } from "../utils/email-templates";
 import type { AuthUser, UserRole as AppUserRole } from "../config/types";
 
@@ -116,10 +116,11 @@ export const authService = {
           email: input.email,
           passwordHash: await hashPassword(input.password),
           role: input.role,
+          emailVerified: false,
           ...profile,
           paymentMode: toDbPaymentMode(profile.paymentMode),
           updatedAt: new Date(),
-        } as any,
+        },
       });
 
       // Special session creation that uses the transaction client
@@ -140,8 +141,10 @@ export const authService = {
     });
 
     // Send verification email (outside transaction)
-    const verificationToken = signAccessToken({ sub: user.id, email: user.email, type: 'email_verification' });
-    sendVerificationEmail({ name: user.name, email: user.email }, verificationToken).catch(() => {});
+    const verificationToken = signPasswordResetToken({ sub: user.id, email: user.email, type: 'email_verification' });
+    sendVerificationEmail({ name: user.name, email: user.email }, verificationToken).catch((err) => {
+      console.error("Failed to send verification email:", err);
+    });
 
     return {
       user: toAuthUser(user),

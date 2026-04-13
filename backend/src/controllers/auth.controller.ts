@@ -1,9 +1,10 @@
 import type { Request, Response } from "express";
 
 import { authService } from "../services/auth.service";
+import { AppError } from "../middleware/error.middleware";
 import { logAudit } from "../utils/audit";
 import { env } from "../config/env";
-import { verifyAccessToken, signAccessToken } from "../utils/jwt";
+import { verifyAccessToken, signAccessToken, signPasswordResetToken, verifyPasswordResetToken } from "../utils/jwt";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../utils/email-templates";
 import { hashPassword } from "../utils/password";
 import { prisma } from "../config/prisma";
@@ -17,7 +18,7 @@ const COOKIE_OPTIONS = {
   path: "/",
 };
 
-const ACCESS_TOKEN_EXPIRY = 15 * 60 * 1000; // 15 mins
+const ACCESS_TOKEN_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
@@ -54,8 +55,7 @@ export const authController = {
   forgotPassword: async (req: Request, res: Response): Promise<void> => {
     const { email } = req.body;
     if (!email) {
-      res.status(400).json({ error: "Email required" });
-      return;
+      throw new AppError("Email required", 400, "BAD_REQUEST");
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -65,7 +65,7 @@ export const authController = {
       return;
     }
 
-    const resetToken = signAccessToken({ sub: user.id, email: user.email, type: 'password_reset' });
+    const resetToken = signPasswordResetToken({ sub: user.id, email: user.email, type: 'password_reset' });
     await sendPasswordResetEmail({ name: user.name, email: user.email }, resetToken);
 
     res.status(200).json({ message: "If the email exists, a reset link has been sent" });
@@ -74,15 +74,13 @@ export const authController = {
   resetPassword: async (req: Request, res: Response): Promise<void> => {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
-      res.status(400).json({ error: "Token and new password required" });
-      return;
+      throw new AppError("Token and new password required", 400, "BAD_REQUEST");
     }
 
     try {
-      const payload = verifyAccessToken(token);
+      const payload = verifyPasswordResetToken(token);
       if (!payload || typeof payload !== 'object' || !('type' in payload) || payload.type !== 'password_reset' || !('sub' in payload)) {
-        res.status(400).json({ error: "Invalid token" });
-        return;
+        throw new AppError("Invalid token", 400, "INVALID_TOKEN");
       }
 
       const userId = payload.sub as string;
@@ -116,15 +114,13 @@ export const authController = {
   verifyEmail: async (req: Request, res: Response): Promise<void> => {
     const { token } = req.body;
     if (!token) {
-      res.status(400).json({ error: "Token required" });
-      return;
+      throw new AppError("Token required", 400, "BAD_REQUEST");
     }
 
     try {
-      const payload = verifyAccessToken(token);
+      const payload = verifyPasswordResetToken(token);
       if (!payload || typeof payload !== 'object' || !('type' in payload) || payload.type !== 'email_verification' || !('sub' in payload)) {
-        res.status(400).json({ error: "Invalid token" });
-        return;
+        throw new AppError("Invalid token", 400, "INVALID_TOKEN");
       }
 
       const userId = payload.sub as string;
@@ -165,7 +161,7 @@ export const authController = {
       return;
     }
 
-    const verificationToken = signAccessToken({ sub: user.id, email: user.email, type: 'email_verification' });
+    const verificationToken = signPasswordResetToken({ sub: user.id, email: user.email, type: 'email_verification' });
     await sendVerificationEmail({ name: user.name, email: user.email }, verificationToken);
 
     res.status(200).json({ message: "Verification email sent" });

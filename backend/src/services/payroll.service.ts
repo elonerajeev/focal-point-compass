@@ -166,7 +166,7 @@ export const payrollService = {
     }
 
     const teamMember = await prisma.teamMember.findUnique({
-      where: { email: payroll.memberId },
+      where: { id: Number(payroll.memberId) },
       select: { name: true, email: true },
     });
     if (!teamMember) {

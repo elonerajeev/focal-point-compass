@@ -195,7 +195,7 @@ export async function sendVerificationEmail(user: { name: string; email: string 
     const email = {
       to: user.email,
       subject: `Verify Your Email - ${APP_NAME}`,
-      text: `Hello ${user.name},\n\nPlease verify your email by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nBest regards,\nThe ${APP_NAME} Team`,
+      text: `Hello ${user.name},\n\nPlease verify your email by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 1 hour.\n\nBest regards,\nThe ${APP_NAME} Team`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
           <h2 style="color: #2563eb;">Verify Your Email</h2>
@@ -204,7 +204,7 @@ export async function sendVerificationEmail(user: { name: string; email: string 
           <p style="margin: 24px 0;">
             <a href="${verificationUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
           </p>
-          <p style="color: #6b7280; font-size: 14px;">This link expires in 24 hours. If you didn't create this account, please ignore this email.</p>
+          <p style="color: #6b7280; font-size: 14px;">This link expires in 1 hour. If you didn't create this account, please ignore this email.</p>
           <p style="margin-top: 24px; color: #6b7280;">Best regards,<br />The ${APP_NAME} Team</p>
         </div>
       `,
@@ -456,5 +456,29 @@ export async function sendSalaryPaidEmail(salary: { name: string; email: string;
 
 export async function sendInvoiceReminder(invoice: { id: string; client: string; amount: string; due: string }, recipientEmail: string) {
   const email = emailTemplates.invoiceReminder(invoice, recipientEmail);
+  await sendMail(email);
+}
+
+export async function sendInvoiceSentEmail(invoice: { id: string; client: string; amount: string; due: string }, recipientEmail: string) {
+  const email = {
+    to: recipientEmail,
+    subject: `Invoice Sent: ${invoice.id} - ${invoice.amount} due ${invoice.due}`,
+    text: `Hello,\n\nInvoice ${invoice.id} for ${invoice.amount} has been sent.\n\nClient: ${invoice.client}\nAmount: ${invoice.amount}\nDue Date: ${invoice.due}\n\nPlease review and process the payment.\n\nBest regards,\nThe ${APP_NAME} Team`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111827;">
+        <h2 style="color: #2563eb;">Invoice Sent</h2>
+        <p>Hello,</p>
+        <p>A new invoice has been sent for your review.</p>
+        <table style="margin: 16px 0; border-collapse: collapse; border: 1px solid #e5e7eb;">
+          <tr><td style="padding: 8px 16px; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Invoice ID</td><td style="padding: 8px 16px; border-bottom: 1px solid #e5e7eb;">${invoice.id}</td></tr>
+          <tr><td style="padding: 8px 16px; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Client</td><td style="padding: 8px 16px; border-bottom: 1px solid #e5e7eb;">${invoice.client}</td></tr>
+          <tr><td style="padding: 8px 16px; font-weight: 600; border-bottom: 1px solid #e5e7eb;">Amount</td><td style="padding: 8px 16px; border-bottom: 1px solid #e5e7eb; color: #059669; font-weight: 600;">${invoice.amount}</td></tr>
+          <tr><td style="padding: 8px 16px; font-weight: 600;">Due Date</td><td style="padding: 8px 16px;">${invoice.due}</td></tr>
+        </table>
+        <p>Please review the invoice details and process the payment accordingly.</p>
+        <p style="margin-top: 24px; color: #6b7280;">Best regards,<br />The ${APP_NAME} Team</p>
+      </div>
+    `,
+  };
   await sendMail(email);
 }

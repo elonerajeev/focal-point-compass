@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowUpRight, FileText, Sparkles, TrendingUp } from "lucide-react";
 
-import PageLoader from "@/components/shared/PageLoader";
+import { ReportsSkeleton } from "@/components/skeletons";
 import ErrorFallback from "@/components/shared/ErrorFallback";
 import AdminOnly from "@/components/shared/AdminOnly";
 import ShowMoreButton from "@/components/shared/ShowMoreButton";
@@ -38,7 +38,7 @@ function ReportsPageInner() {
   const [visibleReportCount, setVisibleReportCount] = useState(PAGE_SIZE);
   const [visibleRowCount, setVisibleRowCount] = useState(PAGE_SIZE);
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading) return <ReportsSkeleton />;
   if (reportsError) {
     return (
       <ErrorFallback

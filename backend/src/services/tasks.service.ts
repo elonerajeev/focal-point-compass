@@ -5,6 +5,7 @@ import type { UserRole } from "../config/types";
 import { AppError } from "../middleware/error.middleware";
 import { getEmployeeAssigneeScope } from "../utils/access-control";
 import { sendTaskAssignmentEmail } from "../utils/email-templates";
+import { io } from "../server";
 
 type TaskRecord = {
   id: number;
@@ -167,7 +168,7 @@ export const tasksService = {
     return grouped;
   },
 
-  async create(input: TaskInput) {
+  async create(input: TaskInput, access?: AccessScope) {
     await ensureProjectExists(input.projectId);
 
     const task = await prisma.task.create({
@@ -187,6 +188,13 @@ export const tasksService = {
 
     // Send task assignment email
     const assignee = await prisma.teamMember.findUnique({ where: { email: input.assignee }, select: { name: true, email: true } });
+    let assignerName = "Task Manager";
+    if (access) {
+      const assigner = await prisma.teamMember.findUnique({ where: { email: access.email }, select: { name: true } });
+      if (assigner) {
+        assignerName = assigner.name;
+      }
+    }
     if (assignee) {
       sendTaskAssignmentEmail({
         title: input.title,
@@ -195,8 +203,14 @@ export const tasksService = {
         dueDate: input.dueDate || "",
         assigneeEmail: assignee.email,
         assigneeName: assignee.name,
-        assignerName: "Task Manager", // TODO: Get actual assigner
+        assignerName,
       }).catch(() => {});
+    }
+
+    // Emit real-time update
+    io.to(`project_${task.projectId}`).emit('task:created', mapTask(task));
+    if (assignee) {
+      io.to(`user_${assignee.email}`).emit('task:assigned', mapTask(task));
     }
 
     await syncProjectTaskStats(task.projectId);

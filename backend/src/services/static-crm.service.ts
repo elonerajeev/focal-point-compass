@@ -2,8 +2,7 @@ import type { CompanyRecord, CompanySize, ContactRecord, SalesMetrics } from "..
 import { commandActions, themePreviews } from "../data/crm-static";
 import { prisma } from "../config/prisma";
 
-// Leads, Deals, Companies, and Sales Metrics need proper database tables
-// Until dedicated sales tables are added, derive what we can from real client/invoice records.
+// Sales portfolio views are derived from live CRM records already present in the database.
 
 function parseCurrencyAmount(value: string | null | undefined) {
   if (!value) return 0;
@@ -51,18 +50,6 @@ function splitName(fullName: string) {
 }
 
 export const staticCrmService = {
-  async listLeads() {
-    // Import leadsService dynamically to avoid circular imports
-    const { leadsService } = await import("./leads.service");
-    return leadsService.list(null as any); // Admin access for internal use
-  },
-
-  async listDeals() {
-    // Import dealsService dynamically to avoid circular imports
-    const { dealsService } = await import("./deals.service");
-    return dealsService.list(null as any); // Admin access for internal use
-  },
-
   async listCompanies() {
     const clients = await prisma.client.findMany({
       where: { deletedAt: null },
