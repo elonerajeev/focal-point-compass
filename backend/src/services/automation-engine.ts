@@ -534,8 +534,22 @@ async function executeUpdateField(config: any, event: TriggerEvent) {
     return { success: false, error: "Field and value are required" };
   }
   
-  const resolvedValue = resolveTemplateString(String(value), event);
+  // Whitelist allowed fields per entity type to prevent injection
+  const allowedFields: Record<string, string[]> = {
+    Lead: ['status', 'score', 'notes', 'tags'],
+    Deal: ['stage', 'probability', 'description', 'tags'],
+    Client: ['status', 'notes', 'tags'],
+    Task: ['status', 'priority', 'dueDate', 'column']
+  };
+
   const fieldName = String(field);
+  const entityFields = allowedFields[event.entityType || ''];
+  
+  if (!entityFields || !entityFields.includes(fieldName)) {
+    return { success: false, error: `Field ${fieldName} is not allowed for ${event.entityType}` };
+  }
+  
+  const resolvedValue = resolveTemplateString(String(value), event);
   
   switch (event.entityType) {
     case "Lead":
