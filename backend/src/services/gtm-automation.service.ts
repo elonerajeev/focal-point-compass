@@ -399,23 +399,33 @@ export class GTMAutomationService {
     }
 
     // Score-based assignment - find least loaded rep
-    const repWorkloads = await Promise.all(
-      reps.map(async (rep) => {
-        const leadCount = await prisma.lead.count({
-          where: { assignedTo: rep.email, deletedAt: null }
-        });
-        const dealValue = await prisma.deal.aggregate({
-          where: { assignedTo: rep.email, stage: { notIn: ["closed_won", "closed_lost"] } },
-          _sum: { value: true }
-        });
-        return {
-          rep,
-          leadCount,
-          pipelineValue: dealValue._sum.value || 0,
-          workload: leadCount + (dealValue._sum.value || 0) / 10000
-        };
+    // Use single batched query to prevent N+1 problem
+    const [leadCounts, dealAggregates] = await Promise.all([
+      prisma.lead.groupBy({
+        by: ['assignedTo'],
+        where: { assignedTo: { in: reps.map(r => r.email) }, deletedAt: null },
+        _count: true
+      }),
+      prisma.deal.groupBy({
+        by: ['assignedTo'],
+        where: { assignedTo: { in: reps.map(r => r.email) }, stage: { notIn: ["closed_won", "closed_lost"] } },
+        _sum: { value: true }
       })
-    );
+    ]);
+
+    const leadCountMap = new Map(leadCounts.map(lc => [lc.assignedTo, lc._count]));
+    const dealValueMap = new Map(dealAggregates.map(da => [da.assignedTo, da._sum.value || 0]));
+
+    const repWorkloads = reps.map(rep => {
+      const leadCount = leadCountMap.get(rep.email) || 0;
+      const pipelineValue = dealValueMap.get(rep.email) || 0;
+      return {
+        rep,
+        leadCount,
+        pipelineValue,
+        workload: leadCount + pipelineValue / 10000
+      };
+    });
 
     // Sort by workload (lowest first)
     repWorkloads.sort((a, b) => a.workload - b.workload);
