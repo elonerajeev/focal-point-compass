@@ -32,9 +32,11 @@ import { teamsRouter } from "./routes/teams.routes";
 import { payrollRouter } from "./routes/payroll.routes";
 import { systemRouter } from "./routes/system.routes";
 import { uploadRouter } from "./routes/upload.routes";
+import { automationRouter } from "./routes/automation.routes";
+import { meetingRouter } from "./routes/meeting.routes";
+import { activityRouter } from "./routes/activity.routes";
+import { csvImportRouter } from "./routes/csv-import.routes";
 import { errorHandler, notFound } from "./middleware/error.middleware";
-import { metricsMiddleware } from "./middleware/metrics.middleware";
-import { prometheusRegistry } from "./utils/metrics";
 import { logger } from "./utils/logger";
 
 export function createApp() {
@@ -58,7 +60,23 @@ export function createApp() {
       },
     }),
   );
-  app.use(metricsMiddleware);
+
+  // Only use metrics middleware in non-test environments
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { metricsMiddleware } = require("./middleware/metrics.middleware");
+      const { prometheusRegistry } = require("./utils/metrics");
+      app.use(metricsMiddleware);
+      
+      app.get(["/metrics", "/api/metrics"], async (_req: express.Request, res: express.Response) => {
+        res.set("Content-Type", prometheusRegistry.contentType);
+        res.status(200).send(await prometheusRegistry.metrics());
+      });
+    } catch (e) {
+      // Metrics not available
+    }
+  }
+
   app.use(apiRateLimiter);
 
   app.get(["/health", "/api/health"], (_req, res) => {
@@ -67,10 +85,6 @@ export function createApp() {
       service: "focal-point-compass-backend",
       timestamp: new Date().toISOString(),
     });
-  });
-  app.get(["/metrics", "/api/metrics"], async (_req, res) => {
-    res.set("Content-Type", prometheusRegistry.contentType);
-    res.status(200).send(await prometheusRegistry.metrics());
   });
 
   app.use("/api/attachments", attachmentsRouter);
@@ -98,6 +112,10 @@ export function createApp() {
   app.use("/api/dashboard", dashboardRouter);
   app.use("/api/system", systemRouter);
   app.use("/api/upload", uploadRouter);
+  app.use("/api/automation", automationRouter);
+  app.use("/api/meetings", meetingRouter);
+  app.use("/api/activities", activityRouter);
+  app.use("/api/csv-import", csvImportRouter);
 
   app.use(notFound);
   app.use(errorHandler);

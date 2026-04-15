@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma";
 import { AppError } from "../middleware/error.middleware";
+import { logger } from "../utils/logger";
 
 export type ContactInput = {
   firstName: string;
@@ -51,9 +52,9 @@ export const contactsService = {
   async list(access?: AccessScope) {
     const where: any = { deletedAt: null };
 
-    // RBAC: Admins/Managers see all; Employees see contacts from clients they're assigned to
+    // RBAC: All authenticated users can see contacts
+    // Employees see contacts from clients they're assigned to, PLUS unassigned contacts (from leads)
     if (access?.role === "employee") {
-      // For employees, only show contacts from clients they're assigned to
       const assignedClients = await prisma.client.findMany({
         where: {
           assignedTo: access.email,
@@ -61,21 +62,25 @@ export const contactsService = {
         },
         select: { id: true },
       });
-      where.clientId = { in: assignedClients.map(c => c.id) };
+      const assignedClientIds = assignedClients.map(c => c.id);
+      // Show contacts that either: 1) belong to assigned clients, OR 2) have no clientId (created from leads)
+      where.OR = [
+        { clientId: { in: assignedClientIds } },
+        { clientId: null },
+      ];
     }
 
     try {
       const contacts = await prisma.contact.findMany({
         where,
-        include: {
-          client: true,
-        },
+        include: { client: { select: { id: true, name: true, company: true } } },
         orderBy: { createdAt: "desc" },
+        take: 500,
       });
 
       return contacts.map(mapContact);
     } catch (error) {
-      console.error("Error fetching contacts:", error);
+      logger.error("Error fetching contacts:", error);
       throw new AppError("Failed to fetch contacts", 500, "INTERNAL_ERROR");
     }
   },
@@ -126,7 +131,7 @@ export const contactsService = {
 
       return mapContact(contact);
     } catch (error) {
-      console.error("Error creating contact:", error);
+      logger.error("Error creating contact:", error);
       if (error instanceof AppError) {
         throw error;
       }
@@ -150,7 +155,7 @@ export const contactsService = {
 
       return mapContact(contact);
     } catch (error) {
-      console.error("Error updating contact:", error);
+      logger.error("Error updating contact:", error);
       throw new AppError("Failed to update contact", 500, "INTERNAL_ERROR");
     }
   },
@@ -167,7 +172,7 @@ export const contactsService = {
 
       return { success: true };
     } catch (error) {
-      console.error("Error deleting contact:", error);
+      logger.error("Error deleting contact:", error);
       throw new AppError("Failed to delete contact", 500, "INTERNAL_ERROR");
     }
   },

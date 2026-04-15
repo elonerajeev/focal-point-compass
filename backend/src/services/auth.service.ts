@@ -1,3 +1,4 @@
+import { logger } from "../utils/logger";
 import { UserRole, type PaymentMode as DbPaymentMode } from "@prisma/client";
 import crypto from "crypto";
 
@@ -116,10 +117,8 @@ export const authService = {
           email: input.email,
           passwordHash: await hashPassword(input.password),
           role: input.role,
-          emailVerified: false,
-          ...profile,
-          paymentMode: toDbPaymentMode(profile.paymentMode),
           updatedAt: new Date(),
+          ...profile,
         },
       });
 
@@ -143,7 +142,7 @@ export const authService = {
     // Send verification email (outside transaction)
     const verificationToken = signPasswordResetToken({ sub: user.id, email: user.email, type: 'email_verification' });
     sendVerificationEmail({ name: user.name, email: user.email }, verificationToken).catch((err) => {
-      console.error("Failed to send verification email:", err);
+      logger.warn("Failed to send verification email:", err);
     });
 
     return {

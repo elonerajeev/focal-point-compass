@@ -1,5 +1,6 @@
 import { isRemoteApiEnabled, requestJson, uploadFile } from "@/lib/api-client";
 import type {
+  ActivityRecord,
   AlertRecord,
   AlertsSummary,
   AuditLogListResponse,
@@ -11,11 +12,14 @@ import type {
   Company,
   CreateTeamInput,
   CreateTeamMemberInput,
+  CSVImportRecord,
+  CSVImportLead,
   DashboardSnapshot,
   Deal,
   InvoiceRecord,
   JobRecord,
   Lead,
+  MeetingRecord,
   NoteRecord,
   PayrollRecord,
   ProjectRecord,
@@ -152,20 +156,48 @@ export const crmService = {
       offer: { joiningDate: string; offeredSalary: string; jobTitle: string; department: string; location: string; type: string; generatedAt: string };
     }>(`/candidates/${candidateId}/offer-letter`, { method: "POST", body: JSON.stringify(data) }),
 
-  getContacts: () => fetchCollectionApi<Record<string, unknown>>("/contacts"),
+  getContacts: () => fetchCollectionApi<import("@/types/crm").Contact>("/contacts"),
   createContact: (contact: Record<string, unknown>) =>
     requestJson<Record<string, unknown>>("/contacts", { method: "POST", body: JSON.stringify(contact) }),
   updateContact: (contactId: number, patch: Record<string, unknown>) =>
     requestJson<Record<string, unknown>>(`/contacts/${contactId}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteContact: (contactId: number) => requestJson<void>(`/contacts/${contactId}`, { method: "DELETE" }),
 
-  getLeads: () => fetchCollectionApi<Lead>("/leads"),
+  getLeads: () => fetchCollectionApi<Lead>(`/leads?limit=1000`),
+  getLeadsPage: (params: { limit?: number; page?: number; status?: string; search?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.limit) q.set("limit", String(params.limit));
+    if (params.page) q.set("page", String(params.page));
+    if (params.status) q.set("status", params.status);
+    if (params.search) q.set("search", params.search);
+    return requestJson<{ data: Lead[]; total: number; page: number; limit: number }>(`/leads?${q}`);
+  },
   createLead: (lead: Omit<Lead, "id" | "createdAt" | "updatedAt">) =>
     requestJson<Lead>("/leads", { method: "POST", body: JSON.stringify(lead) }),
   updateLead: (leadId: number, patch: Partial<Lead>) =>
     requestJson<Lead>(`/leads/${leadId}`, { method: "PATCH", body: JSON.stringify(patch) }),
   deleteLead: (leadId: number) => requestJson<void>(`/leads/${leadId}`, { method: "DELETE" }),
   removeLead: (leadId: number) => crmService.deleteLead(leadId),
+
+  // GTM Lead Actions
+  recalculateLeadScore: (leadId: number) =>
+    requestJson<{ score: number; breakdown: Record<string, number>; tags: string[] }>(`/leads/${leadId}/recalculate-score`, { method: "POST" }),
+  createLeadFollowUp: (leadId: number) =>
+    requestJson<{ success: boolean; message: string }>(`/leads/${leadId}/followup-sequence`, { method: "POST" }),
+  assignLeadToRep: (leadId: number) =>
+    requestJson<{ assigned: boolean; repEmail?: string }>(`/leads/${leadId}/assign`, { method: "POST" }),
+  convertLeadToClient: (leadId: number, clientData: { clientName: string; tier?: string }) =>
+    requestJson<{ lead: Lead; client: { id: number; name: string; email: string; tier: string; status: string } }>(`/leads/${leadId}/convert`, { method: "POST", body: JSON.stringify(clientData) }),
+  getHotLeads: () => fetchCollectionApi<Lead>("/leads/filters/hot"),
+  getColdLeads: (days?: number) => fetchCollectionApi<Lead>(`/leads/filters/cold${days ? `?days=${days}` : ''}`),
+  bulkRecalculateScores: () =>
+    requestJson<{ total: number; hotLeads: number; warmLeads: number; mediumLeads: number; coldLeads: number }>("/leads/bulk/recalculate-scores", { method: "POST" }),
+  getGTMOverview: () =>
+    requestJson<import("@/types/automation").GTMOverview>("/automation/gtm/overview"),
+  recalculateClientHealth: (clientId: number) =>
+    requestJson<{ score: number; grade: string; breakdown: Record<string, number> }>(`/clients/${clientId}/recalculate-health`, { method: "POST" }),
+  syncDealLifecycle: (dealId: number) =>
+    requestJson<Record<string, unknown>>(`/deals/${dealId}/gtm-sync`, { method: "POST" }),
 
   getDeals: () => fetchCollectionApi<Deal>("/deals"),
   createDeal: (deal: Omit<Deal, "id" | "createdAt" | "updatedAt">) =>
@@ -278,4 +310,59 @@ export const crmService = {
     requestJson<{ success: boolean; filename: string }>(`/attachments/${id}`, { method: "DELETE" }),
   getAlertsSummary: () => requestJson<AlertsSummary>("/system/alerts/summary"),
   autoUpdateProjectProgress: () => requestJson("/system/alerts/auto-update-progress", { method: "POST" }),
+
+  // Meetings
+  getMeetings: (filters?: { leadId?: number; clientId?: number; contactId?: number; status?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.leadId) params.set("leadId", String(filters.leadId));
+    if (filters?.clientId) params.set("clientId", String(filters.clientId));
+    if (filters?.contactId) params.set("contactId", String(filters.contactId));
+    if (filters?.status) params.set("status", filters.status);
+    return fetchCollectionApi<MeetingRecord>(`/meetings?${params}`);
+  },
+  getUpcomingMeetings: (limit = 10) => fetchCollectionApi<MeetingRecord>(`/meetings/upcoming?limit=${limit}`),
+  getMeeting: (id: number) => fetchApi<{ data: MeetingRecord }>(`/meetings/${id}`),
+  createMeeting: (meeting: {
+    leadId?: number;
+    clientId?: number;
+    contactId?: number;
+    title: string;
+    type?: string;
+    scheduledAt: string;
+    duration?: number;
+    meetingType?: "jitsi" | "google" | "zoom" | "phone" | "in_person";
+    inviteeEmail: string;
+    inviteeName: string;
+    agenda?: string;
+  }) => persistApi<{ data: MeetingRecord }>("/meetings", { method: "POST", body: JSON.stringify(meeting) }),
+  updateMeeting: (id: number, data: { title?: string; notes?: string; status?: string }) =>
+    persistApi<{ data: MeetingRecord }>(`/meetings/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteMeeting: (id: number) => persistApi<{ success: boolean }>(`/meetings/${id}`, { method: "DELETE" }),
+
+  // Activities
+  getLeadActivities: (leadId: number, limit = 50) =>
+    fetchCollectionApi<ActivityRecord>(`/activities/lead/${leadId}?limit=${limit}`),
+  logActivity: (data: {
+    entityType: "lead" | "client" | "deal";
+    entityId: number;
+    type: "email" | "call" | "meeting" | "note" | "stage_change" | "task" | "other";
+    title: string;
+    description?: string;
+  }) => persistApi<{ data: ActivityRecord }>("/activities", { method: "POST", body: JSON.stringify(data) }),
+
+  // Lead stage management
+  updateLeadStage: (leadId: number, status: string, notes?: string) =>
+    persistApi<{ success: boolean; previousStatus: string; newStatus: string }>(`/leads/${leadId}/stage`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, notes }),
+    }),
+
+  // CSV Import
+  listCSVImports: () => fetchCollectionApi<CSVImportRecord>("/csv-import"),
+  getCSVImport: (id: number) =>
+    requestJson<{ data: CSVImportRecord & { leads: CSVImportLead[] } }>(`/csv-import/${id}`),
+  uploadCSV: (file: File) =>
+    uploadFile<{ data: CSVImportRecord; success: number; failed: number; message: string }>("/csv-import", file, "file"),
+  deleteCSVImport: (id: number) =>
+    persistApi<{ success: boolean }>(`/csv-import/${id}`, { method: "DELETE" }),
 };

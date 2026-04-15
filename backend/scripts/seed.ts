@@ -420,6 +420,127 @@ async function seedAuditLogs() {
   }
 }
 
+async function seedGTMAutomationRules() {
+  const rules = [
+    {
+      name: "Lead Lifecycle Sync",
+      description: "Sync lead lifecycle - create contact, deal, and client as lead progresses",
+      trigger: "lead_updated",
+      conditions: [],
+      actions: [
+        { type: "log_lifecycle_sync", params: {} }
+      ],
+      isActive: true,
+      priority: 100,
+      cronExpression: null
+    },
+    {
+      name: "New Lead Welcome",
+      description: "Log when new lead is created and tag appropriately",
+      trigger: "lead_created",
+      conditions: [],
+      actions: [
+        { type: "auto_tag", params: { tags: ["new-lead"] } }
+      ],
+      isActive: true,
+      priority: 90,
+      cronExpression: null
+    },
+    {
+      name: "Hot Lead Auto-Assignment",
+      description: "Automatically assign hot leads (score >= 80) to the best available rep",
+      trigger: "lead_updated",
+      conditions: [{ field: "changes.status", operator: "equals", value: "qualified" }],
+      actions: [
+        { type: "auto_tag", params: { tags: ["hot-lead", "priority"] } },
+        { type: "assign_lead", params: {} },
+        { type: "create_followup_sequence", params: {} }
+      ],
+      isActive: true,
+      priority: 10,
+      cronExpression: null
+    },
+    {
+      name: "Cold Lead Re-engagement",
+      description: "Create re-engagement tasks for cold leads (no activity for 14+ days)",
+      trigger: "cold_lead_detected",
+      conditions: [{ field: "days_inactive", operator: ">=", value: 14 }],
+      actions: [
+        { type: "send_email", params: { template: "cold_lead_reengagement" } },
+        { type: "create_task", params: { title: "Re-engage cold lead", priority: "low" } }
+      ],
+      isActive: true,
+      priority: 5,
+      cronExpression: "0 9 * * 1"
+    },
+    {
+      name: "Stale Deal Alert",
+      description: "Alert managers when deals have been inactive for 7+ days",
+      trigger: "deal_stale",
+      conditions: [{ field: "days_inactive", operator: ">=", value: 7 }],
+      actions: [
+        { type: "create_alert", params: { type: "stale_deal", severity: "warning" } },
+        { type: "create_task", params: { title: "Follow up on stale deal", priority: "medium" } },
+        { type: "notify_manager", params: {} }
+      ],
+      isActive: true,
+      priority: 8,
+      cronExpression: "0 8 * * *"
+    },
+    {
+      name: "Churn Risk Detection",
+      description: "Alert when client health score drops below 50",
+      trigger: "client_health_low",
+      conditions: [{ field: "health_score", operator: "<", value: 50 }],
+      actions: [
+        { type: "create_alert", params: { type: "churn_risk", severity: "critical" } },
+        { type: "escalate_to_manager", params: {} },
+        { type: "create_task", params: { title: "Urgent: Client at churn risk", priority: "high" } }
+      ],
+      isActive: true,
+      priority: 10,
+      cronExpression: null
+    },
+    {
+      name: "Lead Scoring Recalculation",
+      description: "Recalculate lead scores based on company attributes",
+      trigger: "manual",
+      conditions: [],
+      actions: [
+        { type: "recalculate_score", params: {} },
+        { type: "auto_tag", params: {} }
+      ],
+      isActive: true,
+      priority: 7,
+      cronExpression: "0 0 * * 0"
+    },
+    {
+      name: "Enterprise Renewal Reminders",
+      description: "Create renewal reminders 90, 60, and 30 days before contract end",
+      trigger: "renewal_due",
+      conditions: [{ field: "tier", operator: "=", value: "Enterprise" }],
+      actions: [
+        { type: "create_alert", params: { type: "renewal_reminder", severity: "info" } },
+        { type: "create_task", params: { title: "Contract renewal discussion", priority: "medium" } }
+      ],
+      isActive: true,
+      priority: 6,
+      cronExpression: "0 9 1 * *" // First day of each month at 9 AM
+    }
+  ];
+
+  for (const rule of rules) {
+    await prisma.automationRule.create({
+      data: {
+        ...rule,
+        createdBy: "system"
+      }
+    });
+  }
+
+  console.log("Created GTM automation rules");
+}
+
 async function main() {
   assertNonProduction();
   await wipeExistingData();
@@ -439,6 +560,7 @@ async function main() {
   await seedPayroll();
   await seedCalendarEvents();
   await seedAuditLogs();
+  await seedGTMAutomationRules();
   
   console.log("✅ Seed complete - All modules populated!");
   await prisma.$disconnect();

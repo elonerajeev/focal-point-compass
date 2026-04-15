@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Filter,
@@ -24,6 +25,7 @@ import {
   Grid3X3,
   FileText,
   FileSpreadsheet,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,7 @@ import { RADIUS, SPACING, TEXT } from "@/lib/design-tokens";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import AdminOnly from "@/components/shared/AdminOnly";
+import ScheduleMeetingDialog from "@/components/crm/ScheduleMeetingDialog";
 
 const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.05 } } };
 const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
@@ -74,6 +77,7 @@ const ContactsPage = () => {
   const [seniorityFilter, setSeniorityFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [meetingContact, setMeetingContact] = useState<{ id: number; name: string; email: string } | null>(null);
 
   // View mode
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
@@ -94,6 +98,16 @@ const ContactsPage = () => {
     queryKey: ["clients"],
     queryFn: crmService.getClients,
     staleTime: 60000,
+  });
+
+  // Delete contact mutation
+  const deleteContactMutation = useMutation({
+    mutationFn: (id: number) => crmService.deleteContact(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      toast.success("Contact deleted successfully");
+    },
+    onError: () => toast.error("Failed to delete contact"),
   });
 
   // Type definitions for contact data
@@ -118,9 +132,9 @@ const ContactsPage = () => {
 
   // Filter and search contacts
   const filteredContacts = useMemo(() => {
-    if (!contactsData?.data) return [];
+    if (!contactsData) return [];
 
-    const filtered = contactsData.data.filter((contact: ContactType) => {
+    const filtered = contactsData.filter((contact: ContactType) => {
       // Search term filter
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
@@ -135,7 +149,7 @@ const ContactsPage = () => {
       }
 
       // Company filter
-      if (companyFilter !== "all" && contact.clientId !== companyFilter) return false;
+      if (companyFilter !== "all" && String(contact.clientId ?? "") !== companyFilter) return false;
 
       // Department filter
       if (departmentFilter !== "all" && contact.department !== departmentFilter) return false;
@@ -194,9 +208,9 @@ const ContactsPage = () => {
 
   // Statistics
   const stats = useMemo(() => {
-    if (!contactsData?.data) return { total: 0, companies: 0, avgPerCompany: 0 };
+    if (!contactsData) return { total: 0, companies: 0, avgPerCompany: 0 };
 
-    const contacts = contactsData.data;
+    const contacts = contactsData;
     const total = contacts.length;
     const uniqueCompanies = new Set(contacts.map((c: ContactType) => c.clientId).filter(Boolean)).size;
     const avgPerCompany = uniqueCompanies > 0 ? Math.round(total / uniqueCompanies) : 0;
@@ -206,8 +220,8 @@ const ContactsPage = () => {
 
   // Company options for filter
   const companyOptions = useMemo(() => {
-    if (!clientsData?.data) return [];
-    return clientsData.data.map((client: ClientType) => ({
+    if (!clientsData) return [];
+    return clientsData.map((client: ClientType) => ({
       value: client.id.toString(),
       label: client.name
     }));
@@ -408,6 +422,12 @@ const ContactsPage = () => {
 
         {/* Actions */}
         <div className="mt-4 flex items-center gap-3">
+          <Link to="/automation/gtm">
+            <Button variant="outline">
+              <Target className="h-4 w-4 mr-2" />
+              GTM Center
+            </Button>
+          </Link>
           {canEdit && canUseQuickCreate && (
             <Button onClick={() => openQuickCreate?.("contact")}>
               <Plus className="h-4 w-4 mr-2" />
@@ -501,7 +521,7 @@ const ContactsPage = () => {
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">No contacts found</h3>
             <p className="text-muted-foreground mb-4">
-              {filteredContacts.length === 0 && contactsData?.data?.length === 0
+              {filteredContacts.length === 0 && contactsData?.length === 0
                 ? "Get started by adding your first contact."
                 : "Try adjusting your filters or search terms."}
             </p>
@@ -573,11 +593,22 @@ const ContactsPage = () => {
                           </DropdownMenuItem>
                           {canEdit && (
                             <>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setMeetingContact({ id: contact.id, name: `${contact.firstName} ${contact.lastName}`, email: contact.email })}>
+                                <Video className="h-4 w-4 mr-2" />
+                                Schedule Meeting
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openQuickCreate?.("contact", contact)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Contact
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => {
+                                  if (window.confirm(`Delete contact "${contact.firstName} ${contact.lastName}"?`)) {
+                                    deleteContactMutation.mutate(contact.id);
+                                  }
+                                }}
+                              >
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete Contact
                               </DropdownMenuItem>
@@ -671,11 +702,18 @@ const ContactsPage = () => {
                         </DropdownMenuItem>
                         {canEdit && (
                           <>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openQuickCreate?.("contact", contact)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Contact
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => {
+                                if (window.confirm(`Delete contact "${contact.firstName} ${contact.lastName}"?`)) {
+                                  deleteContactMutation.mutate(contact.id);
+                                }
+                              }}
+                            >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete Contact
                             </DropdownMenuItem>
@@ -699,6 +737,16 @@ const ContactsPage = () => {
           </motion.div>
         )}
       </section>
+
+      {meetingContact && (
+        <ScheduleMeetingDialog
+          open={!!meetingContact}
+          onOpenChange={open => !open && setMeetingContact(null)}
+          contactId={meetingContact.id}
+          inviteeName={meetingContact.name}
+          inviteeEmail={meetingContact.email}
+        />
+      )}
     </div>
   );
 };

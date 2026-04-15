@@ -25,12 +25,19 @@ import {
   ReceiptText,
   UsersRound,
   Shield,
+  Zap,
+  Bell,
+  Clock,
+  Target,
+  Workflow,
+  Building2,
+  ArrowRightLeft,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import type { UserRole } from "@/contexts/ThemeContext";
 
-export type SidebarSectionKey = "overview" | "people" | "workspace" | "sales" | "finance" | "hr" | "insights" | "system";
+export type SidebarSectionKey = "overview" | "people" | "workspace" | "sales" | "finance" | "hr" | "insights" | "automation" | "system";
 
 export interface SidebarItem {
   to: string;
@@ -85,14 +92,16 @@ export const sidebarSections: SidebarSection[] = [
   },
   {
     key: "sales",
-    label: "Sales",
-    description: "Clients, leads, and deals",
-    icon: BadgeDollarSign,
+    label: "Sales & Marketing",
+    description: "Clients, leads, pipeline, and deals",
+    icon: Target,
     items: [
-      { to: "/sales/clients", icon: UserCheck, label: "Clients", roles: ["admin", "manager", "client"] },
-      { to: "/sales/contacts", icon: Users, label: "Contacts", roles: ["admin", "manager", "employee"] },
+      { to: "/automation/gtm", icon: Activity, label: "GTM Dashboard", roles: ["admin", "manager", "employee"] },
+      { to: "/automation/flow", icon: ArrowRightLeft, label: "How It Works", roles: ["admin", "manager", "employee"] },
       { to: "/sales/leads", icon: CirclePlus, label: "Leads", roles: ["admin", "manager", "employee"] },
-      { to: "/sales/pipelines", icon: PieChart, label: "Pipelines", roles: ["admin", "manager", "employee"] },
+      { to: "/sales/pipelines", icon: PieChart, label: "Pipeline", roles: ["admin", "manager", "employee"] },
+      { to: "/sales/clients", icon: UserCheck, label: "Clients", roles: ["admin", "manager", "employee"] },
+      { to: "/sales/contacts", icon: Users, label: "Contacts", roles: ["admin", "manager", "employee"] },
     ],
   },
   {
@@ -124,6 +133,18 @@ export const sidebarSections: SidebarSection[] = [
     icon: Activity,
     items: [
       { to: "/insights/analytics", icon: BarChart3, label: "Analytics", roles: ["admin", "manager"], badge: "New" },
+    ],
+  },
+  {
+    key: "automation",
+    label: "Automation",
+    description: "Workflows, alerts, and triggers",
+    icon: Zap,
+    items: [
+      { to: "/automation/rules", icon: Zap, label: "Rules", roles: ["admin", "manager"] },
+      { to: "/automation/alerts", icon: Bell, label: "Alerts", roles: ["admin", "manager"] },
+      { to: "/automation/scheduled", icon: Clock, label: "Scheduled", roles: ["admin", "manager"] },
+      { to: "/automation/logs", icon: Activity, label: "Activity Logs", roles: ["admin", "manager"] },
     ],
   },
   {
