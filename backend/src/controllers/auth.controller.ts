@@ -13,8 +13,8 @@ const IS_PROD = env.NODE_ENV === "production";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: IS_PROD,
-  sameSite: "lax" as const,
+  secure: false,
+  sameSite: false as unknown as "lax",
   path: "/",
 };
 

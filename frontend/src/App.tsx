@@ -54,6 +54,7 @@ const AutomationAlertsPage = lazy(() => import("@/pages/AutomationAlertsPage"));
 const AutomationScheduledPage = lazy(() => import("@/pages/AutomationScheduledPage"));
 const AutomationLogsPage = lazy(() => import("@/pages/AutomationLogsPage"));
 const GTMOpsPage = lazy(() => import("@/pages/GTMOpsPage"));
+const GTMFlowPage = lazy(() => import("@/pages/GTMFlowPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -149,6 +150,7 @@ const App = () => {
 
                               <Route path="/automation/rules" element={<RouteAccessGuard><AutomationRulesPage /></RouteAccessGuard>} />
                               <Route path="/automation/gtm" element={<RouteAccessGuard><GTMOpsPage /></RouteAccessGuard>} />
+                              <Route path="/automation/flow" element={<RouteAccessGuard><GTMFlowPage /></RouteAccessGuard>} />
                               <Route path="/automation/alerts" element={<RouteAccessGuard><AutomationAlertsPage /></RouteAccessGuard>} />
                               <Route path="/automation/scheduled" element={<RouteAccessGuard><AutomationScheduledPage /></RouteAccessGuard>} />
                               <Route path="/automation/logs" element={<RouteAccessGuard><AutomationLogsPage /></RouteAccessGuard>} />

@@ -140,4 +140,47 @@ router.post(
   }),
 );
 
+// Update lead stage
+router.patch(
+  "/:id/stage",
+  requireRole(["admin", "manager", "employee"]),
+  asyncHandler(async (req, res) => {
+    const { status, notes } = req.body;
+    const result = await leadsService.updateStage(Number(req.params.id), status, notes, req.auth);
+    res.json(result);
+  }),
+);
+
+// Log activity for lead
+router.post(
+  "/:id/activity",
+  requireRole(["admin", "manager", "employee"]),
+  asyncHandler(async (req, res) => {
+    const { type, title, description } = req.body;
+    const result = await leadsService.logActivity(Number(req.params.id), type, title, description, req.auth);
+    res.status(201).json(result);
+  }),
+);
+
+// Get lead activities
+router.get(
+  "/:id/activities",
+  requireRole(["admin", "manager", "employee"]),
+  asyncHandler(async (req, res) => {
+    const limit = Number(req.query.limit) || 50;
+    const activities = await leadsService.getActivities(Number(req.params.id), limit);
+    res.json(activities);
+  }),
+);
+
+// Get lead meetings
+router.get(
+  "/:id/meetings",
+  requireRole(["admin", "manager", "employee"]),
+  asyncHandler(async (req, res) => {
+    const meetings = await leadsService.getMeetings(Number(req.params.id));
+    res.json(meetings);
+  }),
+);
+
 export const leadsRouter = router;

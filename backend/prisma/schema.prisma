@@ -58,6 +58,7 @@ model Client {
   company     String        @default("")
   tags        String[]      @default([])
   contacts    Contact[]
+  meetings    Meeting[]
   
   // Health tracking
   lastContactDate DateTime?
@@ -381,6 +382,12 @@ model Lead {
   budget      String?
   timeline    String?
 
+  // Activity tracking
+  lastContactDate DateTime?
+
+  // Relations
+  meetings    Meeting[]
+
   @@index([deletedAt])
   @@index([status])
   @@index([source])
@@ -613,6 +620,77 @@ model CalendarEvent {
   @@index([deletedAt])
   @@index([date])
   @@index([assigneeId])
+}
+
+enum MeetingType {
+  demo
+  discovery
+  proposal
+  negotiation
+  onboarding
+  check_in
+  other
+}
+
+enum MeetingStatus {
+  scheduled
+  completed
+  cancelled
+  no_show
+}
+
+model Meeting {
+  id            Int           @id @default(autoincrement())
+  leadId        Int?
+  clientId      Int?
+  title         String
+  type          MeetingType   @default(other)
+  scheduledAt   DateTime
+  duration      Int           @default(30)
+  meetingUrl    String?
+  hostId        String
+  hostName      String
+  inviteeEmail  String
+  inviteeName   String
+  agenda        String        @default("")
+  notes         String?
+  status        MeetingStatus @default(scheduled)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  lead          Lead?         @relation(fields: [leadId], references: [id])
+  client        Client?       @relation(fields: [clientId], references: [id])
+
+  @@index([leadId])
+  @@index([clientId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+enum ActivityType {
+  email
+  call
+  meeting
+  note
+  stage_change
+  task
+  other
+}
+
+model Activity {
+  id          Int          @id @default(autoincrement())
+  entityType String
+  entityId   Int
+  type        ActivityType
+  title       String
+  description String       @default("")
+  metadata    String       @default("")
+  createdBy   String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model Payroll {
@@ -981,4 +1059,29 @@ model Alert {
   @@index([severity])
   @@index([createdAt])
   @@index([type])
+}
+
+model CsvImport {
+  id           Int       @id @default(autoincrement())
+  filename     String
+  totalRows    Int       @default(0)
+  successCount Int       @default(0)
+  errorCount   Int       @default(0)
+  status       CsvImportStatus @default(pending)
+  errors       String[]  @default([])
+  importedBy   String
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([importedBy])
+}
+
+enum CsvImportStatus {
+  pending
+  processing
+  completed
+  failed
 }

@@ -44,6 +44,30 @@ export class GTMAutomationService {
   // LEAD SCORING ENGINE
   // ============================================
 
+  static async calculateLeadScoreFromCriteria(criteria: {
+    companySize?: string;
+    budget?: string;
+    timeline?: string;
+    source?: string;
+  }): Promise<number> {
+    let score = 0;
+    
+    if (criteria.companySize) {
+      score += this.scoreCompanySize(criteria.companySize);
+    }
+    if (criteria.source) {
+      score += this.scoreSource(criteria.source);
+    }
+    if (criteria.budget) {
+      score += this.scoreBudget(criteria.budget);
+    }
+    if (criteria.timeline) {
+      score += this.scoreTimeline(criteria.timeline);
+    }
+    
+    return Math.min(100, score);
+  }
+
   static async calculateLeadScore(leadId: number): Promise<{ score: number; breakdown: Record<string, number> }> {
     // Check cache first
     const cached = getCachedScore(leadId);

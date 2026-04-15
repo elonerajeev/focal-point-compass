@@ -1,5 +1,6 @@
 import { isRemoteApiEnabled, requestJson, uploadFile } from "@/lib/api-client";
 import type {
+  ActivityRecord,
   AlertRecord,
   AlertsSummary,
   AuditLogListResponse,
@@ -11,11 +12,14 @@ import type {
   Company,
   CreateTeamInput,
   CreateTeamMemberInput,
+  CSVImportRecord,
+  CSVImportLead,
   DashboardSnapshot,
   Deal,
   InvoiceRecord,
   JobRecord,
   Lead,
+  MeetingRecord,
   NoteRecord,
   PayrollRecord,
   ProjectRecord,
@@ -298,4 +302,57 @@ export const crmService = {
     requestJson<{ success: boolean; filename: string }>(`/attachments/${id}`, { method: "DELETE" }),
   getAlertsSummary: () => requestJson<AlertsSummary>("/system/alerts/summary"),
   autoUpdateProjectProgress: () => requestJson("/system/alerts/auto-update-progress", { method: "POST" }),
+
+  // Meetings
+  getMeetings: (filters?: { leadId?: number; clientId?: number; status?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.leadId) params.set("leadId", String(filters.leadId));
+    if (filters?.clientId) params.set("clientId", String(filters.clientId));
+    if (filters?.status) params.set("status", filters.status);
+    return fetchCollectionApi<MeetingRecord>(`/meetings?${params}`);
+  },
+  getUpcomingMeetings: (limit = 10) => fetchCollectionApi<MeetingRecord>(`/meetings/upcoming?limit=${limit}`),
+  getMeeting: (id: number) => fetchApi<{ data: MeetingRecord }>(`/meetings/${id}`),
+  createMeeting: (meeting: {
+    leadId?: number;
+    clientId?: number;
+    title: string;
+    type?: string;
+    scheduledAt: string;
+    duration?: number;
+    meetingType?: "jitsi" | "google" | "zoom" | "phone" | "in_person";
+    inviteeEmail: string;
+    inviteeName: string;
+    agenda?: string;
+  }) => persistApi<{ data: MeetingRecord }>("/meetings", { method: "POST", body: JSON.stringify(meeting) }),
+  updateMeeting: (id: number, data: { title?: string; notes?: string; status?: string }) =>
+    persistApi<{ data: MeetingRecord }>(`/meetings/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteMeeting: (id: number) => persistApi<{ success: boolean }>(`/meetings/${id}`, { method: "DELETE" }),
+
+  // Activities
+  getLeadActivities: (leadId: number, limit = 50) =>
+    fetchCollectionApi<ActivityRecord>(`/activities/lead/${leadId}?limit=${limit}`),
+  logActivity: (data: {
+    entityType: "lead" | "client" | "deal";
+    entityId: number;
+    type: "email" | "call" | "meeting" | "note" | "stage_change" | "task" | "other";
+    title: string;
+    description?: string;
+  }) => persistApi<{ data: ActivityRecord }>("/activities", { method: "POST", body: JSON.stringify(data) }),
+
+  // Lead stage management
+  updateLeadStage: (leadId: number, status: string, notes?: string) =>
+    persistApi<{ success: boolean; previousStatus: string; newStatus: string }>(`/leads/${leadId}/stage`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, notes }),
+    }),
+
+  // CSV Import
+  listCSVImports: () => fetchCollectionApi<CSVImportRecord>("/csv-import"),
+  getCSVImport: (id: number) =>
+    requestJson<{ data: CSVImportRecord & { leads: CSVImportLead[] } }>(`/csv-import/${id}`),
+  uploadCSV: (file: File) =>
+    uploadFile<{ data: CSVImportRecord; success: number; failed: number; message: string }>("/csv-import", file, "file"),
+  deleteCSVImport: (id: number) =>
+    persistApi<{ success: boolean }>(`/csv-import/${id}`, { method: "DELETE" }),
 };

@@ -71,6 +71,33 @@ export interface Lead {
   convertedToClientId?: string;
 }
 
+export interface CSVImportRecord {
+  id: number;
+  filename: string;
+  totalRows: number;
+  successCount: number;
+  errorCount: number;
+  status: "pending" | "processing" | "completed" | "failed";
+  errors: string[];
+  importedBy: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface CSVImportLead {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  jobTitle?: string;
+  source: string;
+  status: string;
+  score: number;
+  createdAt: string;
+}
+
 export interface Deal {
   id: string;
   title: string;
@@ -542,4 +569,43 @@ export interface AlertsSummary {
   critical: number;
   warning: number;
   byType: Record<AlertType, number>;
+}
+
+export type MeetingType = "demo" | "discovery" | "proposal" | "negotiation" | "onboarding" | "check_in" | "other";
+export type MeetingStatus = "scheduled" | "completed" | "cancelled" | "no_show";
+export type ActivityType2 = "email" | "call" | "meeting" | "note" | "stage_change" | "task" | "other";
+
+export interface MeetingRecord {
+  id: number;
+  leadId: number | null;
+  clientId: number | null;
+  title: string;
+  type: MeetingType;
+  scheduledAt: string;
+  duration: number;
+  meetingUrl: string | null;
+  hostId: string;
+  hostName: string;
+  inviteeEmail: string;
+  inviteeName: string;
+  agenda: string;
+  notes: string | null;
+  status: MeetingStatus;
+  createdAt: string;
+  updatedAt: string;
+  lead?: { id: number; name: string; email: string } | null;
+  client?: { id: number; name: string; email: string } | null;
+}
+
+export interface ActivityRecord {
+  id: number;
+  entityType: string;
+  entityId: number;
+  type: ActivityType2;
+  title: string;
+  description: string;
+  metadata: string | Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }

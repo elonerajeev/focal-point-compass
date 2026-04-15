@@ -11,6 +11,51 @@ type LifecycleSummary = {
   notes: string[];
 };
 
+async function logLifecycleToAutomationLog(
+  leadId: number,
+  summary: LifecycleSummary,
+  performedBy?: string
+) {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+  if (!lead) return;
+
+  const actions: any[] = [];
+  
+  if (summary.contactId) {
+    actions.push({ type: "contact_created", status: "success", details: { contactId: summary.contactId } });
+  }
+  if (summary.dealId) {
+    actions.push({ type: "deal_created", status: "success", details: { dealId: summary.dealId } });
+  }
+  if (summary.clientId) {
+    actions.push({ type: "client_created", status: "success", details: { clientId: summary.clientId } });
+  }
+  if (summary.tasksCreated > 0) {
+    actions.push({ type: "tasks_created", status: "success", details: { count: summary.tasksCreated } });
+  }
+  if (summary.remindersCreated > 0) {
+    actions.push({ type: "reminders_created", status: "success", details: { count: summary.remindersCreated } });
+  }
+
+  await prisma.automationLog.create({
+    data: {
+      ruleId: 0,
+      trigger: "lead_updated",
+      triggerData: {
+        leadId,
+        leadName: `${lead.firstName} ${lead.lastName}`,
+        status: lead.status,
+        performedBy,
+      },
+      actionData: actions,
+      status: "completed",
+      entityType: "Lead",
+      entityId: leadId,
+      completedAt: new Date(),
+    },
+  });
+}
+
 const FOLLOWUP_TAG = "gtm-followup";
 const AUTO_TAG = "gtm-auto";
 
@@ -400,10 +445,15 @@ async function closePendingLeadReminders(leadId: number) {
 
 export const gtmLifecycleService = {
   async syncLeadLifecycle(leadId: number, performedBy?: string): Promise<LifecycleSummary> {
+    console.log(`[Lifecycle Sync] Starting sync for lead ${leadId}`);
+    
     const lead = await prisma.lead.findUnique({ where: { id: leadId } });
     if (!lead || lead.deletedAt) {
+      console.log(`[Lifecycle Sync] Lead ${leadId} not found or deleted`);
       throw new Error("Lead not found");
     }
+
+    console.log(`[Lifecycle Sync] Lead ${leadId} status: ${lead.status}, name: ${lead.firstName} ${lead.lastName}`);
 
     const summary: LifecycleSummary = {
       leadId,
@@ -413,21 +463,37 @@ export const gtmLifecycleService = {
     };
 
     const shouldBridgeToContact = ["contacted", "qualified", "proposal", "negotiation", "closed_won"].includes(lead.status);
+    console.log(`[Lifecycle Sync] shouldBridgeToContact: ${shouldBridgeToContact}`);
+    
     let contactId: number | undefined;
     if (shouldBridgeToContact) {
-      const contact = await ensureContactFromLead(lead);
-      summary.contactId = contact.id;
-      contactId = contact.id;
-      summary.notes.push("contact_synced");
+      console.log(`[Lifecycle Sync] Creating/linking contact for lead ${leadId}`);
+      try {
+        const contact = await ensureContactFromLead(lead);
+        summary.contactId = contact.id;
+        contactId = contact.id;
+        summary.notes.push("contact_synced");
+        console.log(`[Lifecycle Sync] Contact ${contact.id} created/linked for lead ${leadId}`);
+      } catch (err) {
+        console.error(`[Lifecycle Sync] Failed to create contact for lead ${leadId}:`, err);
+      }
     }
 
     const shouldCreateDeal = ["qualified", "proposal", "negotiation", "closed_won", "closed_lost"].includes(lead.status);
+    console.log(`[Lifecycle Sync] shouldCreateDeal: ${shouldCreateDeal}`);
+    
     let dealId: number | undefined;
     if (shouldCreateDeal) {
-      const deal = await ensureDealFromLead(lead, contactId, lead.convertedToClientId ?? undefined);
-      summary.dealId = deal.id;
-      dealId = deal.id;
-      summary.notes.push("deal_synced");
+      console.log(`[Lifecycle Sync] Creating/linking deal for lead ${leadId}`);
+      try {
+        const deal = await ensureDealFromLead(lead, contactId, lead.convertedToClientId ?? undefined);
+        summary.dealId = deal.id;
+        dealId = deal.id;
+        summary.notes.push("deal_synced");
+        console.log(`[Lifecycle Sync] Deal ${deal.id} created/linked for lead ${leadId}`);
+      } catch (err) {
+        console.error(`[Lifecycle Sync] Failed to create deal for lead ${leadId}:`, err);
+      }
     }
 
     if (["new", "contacted", "qualified", "proposal", "negotiation"].includes(lead.status)) {
@@ -440,41 +506,47 @@ export const gtmLifecycleService = {
     }
 
     if (lead.status === "closed_won") {
-      const client = await ensureClientFromLead(lead);
-      summary.clientId = client.id;
+      console.log(`[Lifecycle Sync] Lead ${leadId} won - creating client`);
+      try {
+        const client = await ensureClientFromLead(lead);
+        summary.clientId = client.id;
+        console.log(`[Lifecycle Sync] Client ${client.id} created for lead ${leadId}`);
 
-      await prisma.lead.update({
-        where: { id: lead.id },
-        data: {
-          convertedAt: lead.convertedAt ?? new Date(),
-          convertedToClientId: client.id,
-          tags: [...new Set([...(lead.tags ?? []), AUTO_TAG, "converted-client"])],
-        },
-      });
-
-      if (contactId) {
-        await prisma.contact.update({
-          where: { id: contactId },
-          data: { clientId: client.id },
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            convertedAt: lead.convertedAt ?? new Date(),
+            convertedToClientId: client.id,
+            tags: [...new Set([...(lead.tags ?? []), AUTO_TAG, "converted-client"])],
+          },
         });
-      }
 
-      if (dealId) {
-        const deal = await prisma.deal.findUnique({ where: { id: dealId } });
-        if (deal) {
-          await prisma.deal.update({
-            where: { id: dealId },
-            data: {
-              stage: "closed_won",
-              probability: 100,
-              tags: [...new Set([...(deal.tags ?? []), clientTag(client.id)])],
-            },
+        if (contactId) {
+          await prisma.contact.update({
+            where: { id: contactId },
+            data: { clientId: client.id },
           });
         }
-      }
 
-      await closePendingLeadReminders(lead.id);
-      summary.notes.push("client_converted");
+        if (dealId) {
+          const deal = await prisma.deal.findUnique({ where: { id: dealId } });
+          if (deal) {
+            await prisma.deal.update({
+              where: { id: dealId },
+              data: {
+                stage: "closed_won",
+                probability: 100,
+                tags: [...new Set([...(deal.tags ?? []), clientTag(client.id)])],
+              },
+            });
+          }
+        }
+
+        await closePendingLeadReminders(lead.id);
+        summary.notes.push("client_converted");
+      } catch (err) {
+        console.error(`[Lifecycle Sync] Failed to create client for lead ${leadId}:`, err);
+      }
     }
 
     if (lead.status === "closed_lost" && dealId) {
@@ -498,6 +570,9 @@ export const gtmLifecycleService = {
       metadata: summary,
     });
 
+    await logLifecycleToAutomationLog(leadId, summary, performedBy);
+
+    console.log(`[Lifecycle Sync] Completed for lead ${leadId}:`, summary);
     return summary;
   },
 

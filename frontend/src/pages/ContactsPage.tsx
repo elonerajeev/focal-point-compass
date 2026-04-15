@@ -129,9 +129,9 @@ const ContactsPage = () => {
 
   // Filter and search contacts
   const filteredContacts = useMemo(() => {
-    if (!contactsData?.data) return [];
+    if (!contactsData) return [];
 
-    const filtered = contactsData.data.filter((contact: ContactType) => {
+    const filtered = contactsData.filter((contact: ContactType) => {
       // Search term filter
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
@@ -146,7 +146,7 @@ const ContactsPage = () => {
       }
 
       // Company filter
-      if (companyFilter !== "all" && contact.clientId !== companyFilter) return false;
+      if (companyFilter !== "all" && String(contact.clientId ?? "") !== companyFilter) return false;
 
       // Department filter
       if (departmentFilter !== "all" && contact.department !== departmentFilter) return false;
@@ -205,9 +205,9 @@ const ContactsPage = () => {
 
   // Statistics
   const stats = useMemo(() => {
-    if (!contactsData?.data) return { total: 0, companies: 0, avgPerCompany: 0 };
+    if (!contactsData) return { total: 0, companies: 0, avgPerCompany: 0 };
 
-    const contacts = contactsData.data;
+    const contacts = contactsData;
     const total = contacts.length;
     const uniqueCompanies = new Set(contacts.map((c: ContactType) => c.clientId).filter(Boolean)).size;
     const avgPerCompany = uniqueCompanies > 0 ? Math.round(total / uniqueCompanies) : 0;
@@ -217,8 +217,8 @@ const ContactsPage = () => {
 
   // Company options for filter
   const companyOptions = useMemo(() => {
-    if (!clientsData?.data) return [];
-    return clientsData.data.map((client: ClientType) => ({
+    if (!clientsData) return [];
+    return clientsData.map((client: ClientType) => ({
       value: client.id.toString(),
       label: client.name
     }));
@@ -518,7 +518,7 @@ const ContactsPage = () => {
             <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">No contacts found</h3>
             <p className="text-muted-foreground mb-4">
-              {filteredContacts.length === 0 && contactsData?.data?.length === 0
+              {filteredContacts.length === 0 && contactsData?.length === 0
                 ? "Get started by adding your first contact."
                 : "Try adjusting your filters or search terms."}
             </p>

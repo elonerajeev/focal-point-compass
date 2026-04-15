@@ -77,10 +77,6 @@ type ConvertLeadInput = {
 };
 
 function mapLead(lead: any): LeadRecord {
-  let status: any = lead.status;
-  if (status === "closed_won") status = "won";
-  if (status === "closed_lost") status = "lost";
-
   return {
     id: lead.id,
     firstName: lead.firstName,
@@ -90,7 +86,7 @@ function mapLead(lead: any): LeadRecord {
     company: lead.company,
     jobTitle: lead.jobTitle,
     source: lead.source,
-    status,
+    status: lead.status,
     score: lead.score,
     assignedTo: lead.assignedTo,
     notes: lead.notes,
@@ -108,8 +104,7 @@ export const leadsService = {
 
     // Filters
     if (params.status) {
-      const dbStatus = params.status === "won" ? "closed_won" : params.status === "lost" ? "closed_lost" : params.status;
-      where.status = dbStatus as any;
+      where.status = params.status as any;
     }
     if (params.source) where.source = params.source as any;
     if (params.assignedTo) where.assignedTo = params.assignedTo;
@@ -426,5 +421,93 @@ export const leadsService = {
       orderBy: { updatedAt: "asc" },
     });
     return leads.map(mapLead);
+  },
+
+  async updateStage(leadId: number, status: string, notes?: string, actor?: any) {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      throw new AppError("Lead not found", 404, "NOT_FOUND");
+    }
+
+    const oldStatus = lead.status;
+    const updatedLead = await prisma.lead.update({
+      where: { id: leadId },
+      data: { status: status as LeadStatus },
+    });
+
+    await prisma.activity.create({
+      data: {
+        entityType: "lead",
+        entityId: leadId,
+        type: "stage_change",
+        title: `Stage changed: ${oldStatus} → ${status}`,
+        description: notes || `Lead moved from ${oldStatus} to ${status}`,
+        metadata: JSON.stringify({ oldStatus, newStatus: status }),
+        createdBy: String(actor?.userId || actor?.email || "system"),
+      },
+    });
+
+    console.log(`[Lead Stage Update] Triggering automation for lead ${leadId}: ${oldStatus} → ${status}`);
+    
+    try {
+      await onLeadUpdated(leadId, { status: status as any }, actor?.email);
+      console.log(`[Lead Stage Update] Automation completed for lead ${leadId}`);
+    } catch (err) {
+      console.error(`[Lead Stage Update] Automation failed for lead ${leadId}:`, err);
+    }
+
+    return {
+      success: true,
+      lead: mapLead(updatedLead),
+      previousStatus: oldStatus,
+      newStatus: status,
+    };
+  },
+
+  async logActivity(leadId: number, type: string, title: string, description?: string, actor?: any) {
+    const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      throw new AppError("Lead not found", 404, "NOT_FOUND");
+    }
+
+    const activity = await prisma.activity.create({
+      data: {
+        entityType: "lead",
+        entityId: leadId,
+        type: type as any,
+        title,
+        description: description || "",
+        metadata: JSON.stringify({}),
+        createdBy: String(actor?.userId || actor?.email || "system"),
+      },
+    });
+
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { lastContactDate: new Date() },
+    }).catch(() => {});
+
+    return activity;
+  },
+
+  async getActivities(leadId: number, limit = 50) {
+    const activities = await prisma.activity.findMany({
+      where: { entityType: "lead", entityId: leadId },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    return activities.map((a) => ({
+      ...a,
+      metadata: a.metadata ? JSON.parse(a.metadata) : {},
+    }));
+  },
+
+  async getMeetings(leadId: number) {
+    const meetings = await prisma.meeting.findMany({
+      where: { leadId },
+      orderBy: { scheduledAt: "desc" },
+    });
+    return meetings;
   },
 };

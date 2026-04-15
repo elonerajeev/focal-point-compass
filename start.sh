@@ -50,6 +50,7 @@ wrow() {
 # ── Helpers ───────────────────────────────────────────────────────────────────
 pid_alive()  { [[ -n "${1:-}" ]] && kill -0 "$1" 2>/dev/null; }
 lcount()     { grep -cE "$2" "$1" 2>/dev/null || echo 0; }
+to_int()     { printf '%s' "${1:-0}" | tr -cd '0-9'; }
 
 proc_mem() {
     local pid="${1:-}"; [[ -z "$pid" ]] && echo "—" && return
@@ -387,6 +388,13 @@ draw_dynamic() {
     f_err=$(lcount  "$LOG_DIR/frontend.log" 'error|ERROR')
     f_warn=$(lcount "$LOG_DIR/frontend.log" 'warn|WARN')
     f_hmr=$(lcount  "$LOG_DIR/frontend.log" 'hmr|hot update|page reload|HMR')
+
+    b_req=$(to_int "$b_req");   b_req=${b_req:-0}
+    b_err=$(to_int "$b_err");   b_err=${b_err:-0}
+    b_warn=$(to_int "$b_warn"); b_warn=${b_warn:-0}
+    f_err=$(to_int "$f_err");   f_err=${f_err:-0}
+    f_warn=$(to_int "$f_warn"); f_warn=${f_warn:-0}
+    f_hmr=$(to_int "$f_hmr");   f_hmr=${f_hmr:-0}
 
     local b_err_col="${DM}"; (( b_err  > 0 )) && b_err_col="${RB}${BD}"
     local b_warn_col="${DM}"; (( b_warn > 0 )) && b_warn_col="${YB}"

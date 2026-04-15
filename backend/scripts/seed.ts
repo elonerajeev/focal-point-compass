@@ -423,10 +423,34 @@ async function seedAuditLogs() {
 async function seedGTMAutomationRules() {
   const rules = [
     {
+      name: "Lead Lifecycle Sync",
+      description: "Sync lead lifecycle - create contact, deal, and client as lead progresses",
+      trigger: "lead_updated",
+      conditions: [],
+      actions: [
+        { type: "log_lifecycle_sync", params: {} }
+      ],
+      isActive: true,
+      priority: 100,
+      cronExpression: null
+    },
+    {
+      name: "New Lead Welcome",
+      description: "Log when new lead is created and tag appropriately",
+      trigger: "lead_created",
+      conditions: [],
+      actions: [
+        { type: "auto_tag", params: { tags: ["new-lead"] } }
+      ],
+      isActive: true,
+      priority: 90,
+      cronExpression: null
+    },
+    {
       name: "Hot Lead Auto-Assignment",
       description: "Automatically assign hot leads (score >= 80) to the best available rep",
-      trigger: "lead_score_above",
-      conditions: [{ field: "score", operator: ">=", value: 80 }],
+      trigger: "lead_updated",
+      conditions: [{ field: "changes.status", operator: "equals", value: "qualified" }],
       actions: [
         { type: "auto_tag", params: { tags: ["hot-lead", "priority"] } },
         { type: "assign_lead", params: {} },
@@ -447,7 +471,7 @@ async function seedGTMAutomationRules() {
       ],
       isActive: true,
       priority: 5,
-      cronExpression: "0 9 * * 1" // Every Monday at 9 AM
+      cronExpression: "0 9 * * 1"
     },
     {
       name: "Stale Deal Alert",
@@ -461,7 +485,7 @@ async function seedGTMAutomationRules() {
       ],
       isActive: true,
       priority: 8,
-      cronExpression: "0 8 * * *" // Every day at 8 AM
+      cronExpression: "0 8 * * *"
     },
     {
       name: "Churn Risk Detection",
@@ -488,7 +512,7 @@ async function seedGTMAutomationRules() {
       ],
       isActive: true,
       priority: 7,
-      cronExpression: "0 0 * * 0" // Every Sunday at midnight
+      cronExpression: "0 0 * * 0"
     },
     {
       name: "Enterprise Renewal Reminders",

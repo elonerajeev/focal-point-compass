@@ -33,6 +33,9 @@ import { payrollRouter } from "./routes/payroll.routes";
 import { systemRouter } from "./routes/system.routes";
 import { uploadRouter } from "./routes/upload.routes";
 import { automationRouter } from "./routes/automation.routes";
+import { meetingRouter } from "./routes/meeting.routes";
+import { activityRouter } from "./routes/activity.routes";
+import { csvImportRouter } from "./routes/csv-import.routes";
 import { errorHandler, notFound } from "./middleware/error.middleware";
 import { logger } from "./utils/logger";
 
@@ -110,6 +113,9 @@ export function createApp() {
   app.use("/api/system", systemRouter);
   app.use("/api/upload", uploadRouter);
   app.use("/api/automation", automationRouter);
+  app.use("/api/meetings", meetingRouter);
+  app.use("/api/activities", activityRouter);
+  app.use("/api/csv-import", csvImportRouter);
 
   app.use(notFound);
   app.use(errorHandler);
