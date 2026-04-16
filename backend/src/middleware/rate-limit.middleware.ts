@@ -14,6 +14,12 @@ export const authRateLimiter = rateLimit({
   limit: 20, // 20 login attempts per 15 min
   standardHeaders: "draft-7",
   legacyHeaders: false,
+  skip: (req) => {
+    if (process.env.NODE_ENV === "development" || process.env.SKIP_AUTH_RATE_LIMIT === "true") {
+      return true;
+    }
+    return false;
+  },
   message: { error: "Too many authentication attempts, please try again later." },
 });
 
