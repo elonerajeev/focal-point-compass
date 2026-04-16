@@ -14,7 +14,7 @@ set -uo pipefail
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
-API_BASE_URL="${API_BASE_URL:-http://localhost:3001}"
+API_BASE_URL="${API_BASE_URL:-http://localhost:3000}"
 
 FAST_FAIL=false
 SKIP_BUILD=false
@@ -191,7 +191,7 @@ if [ -x "$PWD/scripts/api-test.sh" ]; then
     log_info "API Tests" "Start: cd backend && npm run dev"
   else
     API_TEST_LOG="$TMPDIR_LOGS/api_test.log"
-    ( API_BASE_URL="${API_BASE_URL:-http://localhost:3001}" "$PWD/scripts/api-test.sh" 2>&1 ) > "$API_TEST_LOG"
+    ( API_BASE_URL="${API_BASE_URL:-http://localhost:3000}" "$PWD/scripts/api-test.sh" 2>&1 ) > "$API_TEST_LOG"
     
     if [ -f "$API_TEST_LOG" ]; then
       API_PASSED=$(grep "API_PASSED=" "$API_TEST_LOG" | tail -1 | cut -d= -f2)

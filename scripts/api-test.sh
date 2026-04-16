@@ -10,7 +10,7 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 MAGENTA='\033[0;35m'
 
-API_BASE_URL="${API_BASE_URL:-http://localhost:3001}"
+API_BASE_URL="${API_BASE_URL:-http://localhost:3000}"
 API_PREFIX="/api"
 AUTH_TOKEN=""
 ADMIN_TOKEN=""
@@ -159,13 +159,13 @@ setup_auth() {
   # Try login
   body=$(curl -s -X POST "$API_BASE_URL$API_PREFIX/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"admin@test.com","password":"Admin123!@#"}' 2>/dev/null)
+    -d '{"email":"admin@crmpro.com","password":"Password123!"}' 2>/dev/null)
   http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$API_BASE_URL$API_PREFIX/auth/login" \
     -H "Content-Type: application/json" \
-    -d '{"email":"admin@test.com","password":"Admin123!@#"}' 2>/dev/null)
+    -d '{"email":"admin@crmpro.com","password":"Password123!"}' 2>/dev/null)
   
   if [ "$http_code" == "200" ] || [ "$http_code" == "201" ]; then
-    AUTH_TOKEN=$(echo "$body" | grep -o '"token":"[^"]*"' | head -1 | cut -d'"' -f4)
+    AUTH_TOKEN=$(echo "$body" | grep -o '"accessToken":"[^"]*"' | head -1 | cut -d'"' -f4)
     if [ -n "$AUTH_TOKEN" ]; then
       ADMIN_TOKEN="$AUTH_TOKEN"
       log_ok "Auth Setup" "Login successful"
@@ -182,7 +182,7 @@ setup_auth() {
     -d '{"email":"test@api.com","password":"Test123!@#","name":"API Test","role":"admin"}' 2>/dev/null)
   
   if [ "$http_code" == "201" ]; then
-    AUTH_TOKEN=$(echo "$body" | grep -o '"token":"[^"]*"' | head -1 | cut -d'"' -f4)
+    AUTH_TOKEN=$(echo "$body" | grep -o '"accessToken":"[^"]*"' | head -1 | cut -d'"' -f4)
     if [ -n "$AUTH_TOKEN" ]; then
       ADMIN_TOKEN="$AUTH_TOKEN"
       log_ok "Auth Setup" "Signup successful"
@@ -351,8 +351,8 @@ test_system() {
   http_get "/system/audit"
   
   log_cat "Alerts"
-  http_get "/system/alerts"
-  http_get "/system/alerts/summary"
+  http_get "/automation/alerts"
+  http_get "/automation/alerts/summary"
   
   log_cat "CSV Import"
   http_get "/csv-import"
