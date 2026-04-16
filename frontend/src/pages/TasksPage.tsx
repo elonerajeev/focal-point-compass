@@ -297,10 +297,16 @@ export default function TasksPage() {
   }, [pinnedKey]);
 
   useEffect(() => {
-    setBoard(null);
     setTodoVisible(TASK_PAGE_SIZE);
     setInProgressVisible(TASK_PAGE_SIZE);
     setDoneVisible(TASK_PAGE_SIZE);
+  }, []);
+
+  useEffect(() => {
+    if (board === null && data) {
+      setBoard(data);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const effectiveBoard = board ?? data ?? null;
@@ -312,17 +318,30 @@ export default function TasksPage() {
   const moveTaskMutation = useMutation({
     mutationFn: ({ taskId, column }: { taskId: number; column: TaskColumn }) =>
       crmService.updateTask(taskId, { column }),
-    onMutate: async ({ taskId }) => {
+    onMutate: async ({ taskId, column }) => {
       setMovingTaskId(taskId);
+      setBoard((prev) => {
+        if (!prev) return prev;
+        const sourceColumn = orderedColumns.find((col) => prev[col].some((task) => task.id === taskId));
+        if (!sourceColumn || sourceColumn === column) return prev;
+        
+        const task = prev[sourceColumn].find((t) => t.id === taskId);
+        if (!task) return prev;
+        
+        return {
+          ...prev,
+          [sourceColumn]: prev[sourceColumn].filter((t) => t.id !== taskId),
+          [column]: [...prev[column], { ...task, column }],
+        };
+      });
     },
     onSuccess: async (updatedTask) => {
-      queryClient.invalidateQueries({ queryKey: crmKeys.tasks });
-      queryClient.invalidateQueries({ queryKey: crmKeys.projects });
-      toast.success(`Task moved to ${columnMeta[updatedTask.column].label}`);
+      await queryClient.invalidateQueries({ queryKey: crmKeys.tasks });
+      await queryClient.invalidateQueries({ queryKey: crmKeys.projects });
+      toast.success(`Moved to ${columnMeta[updatedTask.column].label}`);
     },
-    onError: async (error) => {
-      setBoard(null);
-      await refetch();
+    onError: async () => {
+      setBoard(data);
       toast.error("Failed to move task. Board reloaded.");
     },
     onSettled: () => {
@@ -332,12 +351,25 @@ export default function TasksPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => crmService.removeTask(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: crmKeys.tasks });
-      queryClient.invalidateQueries({ queryKey: crmKeys.projects });
-      toast.success("Task removed successfully");
+    onMutate: async (id) => {
+      setBoard((prev) => {
+        if (!prev) return prev;
+        const newBoard = { ...prev };
+        orderedColumns.forEach((col) => {
+          newBoard[col] = newBoard[col].filter((task) => task.id !== id);
+        });
+        return newBoard;
+      });
     },
-    onError: () => toast.error("Failed to remove task"),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: crmKeys.tasks });
+      await queryClient.invalidateQueries({ queryKey: crmKeys.projects });
+      toast.success("Task deleted");
+    },
+    onError: async () => {
+      setBoard(data);
+      toast.error("Failed to delete task");
+    },
   });
 
   const togglePin = useCallback((taskId: number) => {
@@ -356,10 +388,9 @@ export default function TasksPage() {
   }, [deleteMutation]);
 
   const handleMove = useCallback((taskId: number, direction: "left" | "right") => {
-    const currentBoard = effectiveBoard;
-    if (!currentBoard || movingTaskId) return;
+    if (!effectiveBoard || movingTaskId) return;
 
-    const sourceColumn = orderedColumns.find((col) => currentBoard[col].some((task) => task.id === taskId));
+    const sourceColumn = orderedColumns.find((col) => effectiveBoard[col].some((task) => task.id === taskId));
     if (!sourceColumn) return;
     
     const currentIndex = orderedColumns.indexOf(sourceColumn);
