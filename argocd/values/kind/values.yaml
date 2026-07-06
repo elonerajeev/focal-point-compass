@@ -1,0 +1,29 @@
+global:
+  environment: development
+  imagePullPolicy: IfNotPresent
+  imageTag: latest
+
+backend:
+  image:
+    repository: flowsyc/backend
+  ingress:
+    host: flowsyc.local
+  env:
+    NODE_ENV: development
+
+frontend:
+  image:
+    repository: flowsyc/frontend
+  ingress:
+    host: flowsyc.local
+
+worker:
+  image:
+    repository: flowsyc/worker
+  scaledJob:
+    queueName: scan-queue
+    queueConnectionSecret: flowsyc-worker-secrets
+
+namespaceProvisioner:
+  image:
+    repository: flowsyc/namespace-provisioner

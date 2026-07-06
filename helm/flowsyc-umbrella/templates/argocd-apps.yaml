@@ -1,0 +1,33 @@
+{{- if .Values.global.argocd -}}
+{{- if .Values.global.argocd.enabled -}}
+{{- range $name, $chart := .Values.global.argocd.apps }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $name }}
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ $.Values.global.argocd.project | default "default" }}
+  source:
+    repoURL: {{ $.Values.global.argocd.repoURL }}
+    targetRevision: {{ $.Values.global.argocd.targetRevision | default "HEAD" }}
+    path: {{ $chart.path }}
+    helm:
+      valueFiles:
+      - {{ $.Values.global.argocd.valuesFile | default "values.yaml" }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ $chart.namespace | default $.Release.Namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - PruneLast=true
+---
+{{- end }}
+{{- end }}
+{{- end -}}

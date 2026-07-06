@@ -1,0 +1,55 @@
+mode: scaledjob
+
+image:
+  repository: flowsyc/worker
+  tag: latest
+  pullPolicy: IfNotPresent
+
+deployment:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+scaledJob:
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  successfulJobsHistory: 3
+  failedJobsHistory: 3
+  queueName: scan-queue
+  queueConnectionSecret: flowsyc-worker-secrets
+  env:
+    WORKER_MODE: oneshot
+    WORKER_MAX_CONCURRENCY: "1"
+    WORKER_MAX_RETRIES: "3"
+    WORKER_LOG_LEVEL: info
+
+job:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 2
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations:
+    azure.workload.identity/client-id: ""
+
+env:
+  DATABASE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: flowsyc-worker-secrets
+        key: DATABASE_URL

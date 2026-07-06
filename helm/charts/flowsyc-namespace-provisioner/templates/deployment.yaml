@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flowsyc-namespace-provisioner.fullname" . }}
+  labels: {{ include "flowsyc-namespace-provisioner.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "flowsyc-namespace-provisioner.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels: {{ include "flowsyc-namespace-provisioner.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "flowsyc-namespace-provisioner.fullname" . }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: provisioner
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+          protocol: TCP
+        env:
+{{- range $key, $val := .Values.env }}
+        - name: {{ $key }}
+          value: {{ $val | quote }}
+{{- end }}
+        resources: {{ toYaml .Values.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.service.port }}
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: {{ .Values.service.port }}

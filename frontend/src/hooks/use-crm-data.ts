@@ -252,3 +252,26 @@ export function useSalesMetrics() {
     staleTime: 1000 * 60 * 5,
   });
 }
+
+// ─── ThreatCheck Security Scanning Hooks ──────────────────────────────
+export function useThreatScans(params?: { page?: number; limit?: number; type?: string; status?: string }) {
+  return useQuery({
+    queryKey: ["threatcheck", "scans", params],
+    queryFn: () => crmService.getThreatScans(params),
+    staleTime: 1000 * 30,
+    refetchInterval: (query) => {
+      const data = query.state.data?.data;
+      const hasRunning = data?.some((s) => s.status === "RUNNING" || s.status === "PENDING");
+      return hasRunning ? 3000 : false;
+    },
+  });
+}
+
+export function useThreatScan(id: number) {
+  return useQuery({
+    queryKey: ["threatcheck", "scan", id],
+    queryFn: () => crmService.getThreatScan(id),
+    enabled: !!id,
+    staleTime: 1000 * 30,
+  });
+}

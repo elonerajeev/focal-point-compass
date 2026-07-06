@@ -32,12 +32,13 @@ import {
   Workflow,
   Building2,
   ArrowRightLeft,
+  Bug,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import type { UserRole } from "@/contexts/ThemeContext";
 
-export type SidebarSectionKey = "overview" | "people" | "workspace" | "sales" | "finance" | "hr" | "insights" | "automation" | "system";
+export type SidebarSectionKey = "overview" | "people" | "workspace" | "sales" | "finance" | "hr" | "insights" | "automation" | "security" | "system";
 
 export interface SidebarItem {
   to: string;
@@ -145,6 +146,15 @@ export const sidebarSections: SidebarSection[] = [
       { to: "/automation/alerts", icon: Bell, label: "Alerts", roles: ["admin", "manager"] },
       { to: "/automation/scheduled", icon: Clock, label: "Scheduled", roles: ["admin", "manager"] },
       { to: "/automation/logs", icon: Activity, label: "Activity Logs", roles: ["admin", "manager"] },
+    ],
+  },
+  {
+    key: "security",
+    label: "Security",
+    description: "Vulnerability scanning and assessments",
+    icon: Shield,
+    items: [
+      { to: "/security/scan", icon: Bug, label: "Security Scan", roles: ["admin", "manager"] },
     ],
   },
   {

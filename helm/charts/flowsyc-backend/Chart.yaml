@@ -1,0 +1,11 @@
+apiVersion: v2
+name: flowsyc-backend
+description: Flowsyc CRM Backend API (Express 5 / TypeScript)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - crm
+  - flowsyc
+  - backend
+  - express

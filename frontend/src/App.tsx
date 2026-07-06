@@ -73,6 +73,7 @@ const DevOpsDeploymentsPage = lazy(() => import("@/pages/devops/DeploymentsPage"
 const DevOpsPipelinesPage   = lazy(() => import("@/pages/devops/PipelinesPage"));
 const DevOpsLogsPage        = lazy(() => import("@/pages/devops/LogsPage"));
 const DevOpsAlertsPage      = lazy(() => import("@/pages/devops/AlertsPage"));
+const SecurityScanPage      = lazy(() => import("@/pages/SecurityScanPage"));
 
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -242,6 +243,8 @@ const App = () => {
                                       <Route path="/devops/logs"        element={<RouteAccessGuard><Suspense fallback={<PageLoader />}><DevOpsLogsPage /></Suspense></RouteAccessGuard>} />
                                       <Route path="/devops/alerts"      element={<RouteAccessGuard><Suspense fallback={<PageLoader />}><DevOpsAlertsPage /></Suspense></RouteAccessGuard>} />
                                       <Route path="/devops"             element={<Navigate to="/devops/health" replace />} />
+                                      <Route path="/security/scan" element={<RouteAccessGuard><SecurityScanPage /></RouteAccessGuard>} />
+                                      <Route path="/security"       element={<Navigate to="/security/scan" replace />} />
                                       <Route path="*" element={<NotFound />} />
                                     </Routes>
                                   </Suspense>

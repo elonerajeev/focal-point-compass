@@ -1,0 +1,27 @@
+apiVersion: v2
+name: flowsyc
+description: Flowsyc CRM - Umbrella chart deploying all microservices
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - crm
+  - flowsyc
+  - umbrella
+dependencies:
+- name: flowsyc-backend
+  version: ">=0.1.0"
+  repository: "file://../charts/flowsyc-backend"
+  condition: backend.enabled
+- name: flowsyc-frontend
+  version: ">=0.1.0"
+  repository: "file://../charts/flowsyc-frontend"
+  condition: frontend.enabled
+- name: flowsyc-worker
+  version: ">=0.1.0"
+  repository: "file://../charts/flowsyc-worker"
+  condition: worker.enabled
+- name: flowsyc-namespace-provisioner
+  version: ">=0.1.0"
+  repository: "file://../charts/flowsyc-namespace-provisioner"
+  condition: namespaceProvisioner.enabled

@@ -4,14 +4,14 @@
 
 ## Quick Reference
 
-| | Frontend | Backend |
-|---|---|---|
-| **Directory** | `frontend/` | `backend/` |
-| **Runtime** | Node 20+, Vite 8 | Node 20+, Express 5 |
-| **Port** | `8080` (dev) | `3000` |
-| **Dev Command** | `cd frontend && npm run dev` | `cd backend && npm run dev` |
-| **Type System** | TypeScript strict | TypeScript strict |
-| **Package Type** | ESM (`"type": "module"`) | CommonJS (`"type": "commonjs"`) |
+| | Frontend | Backend | Worker |
+|---|---|---|---|
+| **Directory** | `frontend/` | `backend/` | `worker/` |
+| **Runtime** | Node 20+, Vite 8 | Node 20+, Express 5 | Node 20+ |
+| **Port** | `8080` (dev) | `3000` | — (polls DB) |
+| **Dev Command** | `cd frontend && npm run dev` | `cd backend && npm run dev` | `cd worker && npm run dev` |
+| **Type System** | TypeScript strict | TypeScript strict | TypeScript strict |
+| **Package Type** | ESM (`"type": "module"`) | CommonJS (`"type": "commonjs"`) | CommonJS |
 
 ---
 
@@ -28,10 +28,19 @@
 │  Backend (Express 5) → EC2              │
 │  31 routes, 17 controllers,             │
 │  38 services, 16 Zod validators         │
-└────────────┬────────────────────────────┘
-             │ Prisma ORM
-┌────────────▼────────────────────────────┐
+└─────┬──────┬────────────────────────────┘
+      │      │ Prisma ORM
+┌─────▼──────▼────────────────────────────┐
 │  PostgreSQL → 28+ models, 14 migrations │
+└────────────┬────────────────────────────┘
+             │
+┌────────────▼────────────────────────────┐
+│  Worker (poll-based)                    │
+│  ThreatCheck scanning engines:          │
+│  ├─ Dependency Engine (npm audit)       │
+│  └─ Docker Engine (trivy/docker scout)  │
+│  (Pluggable — add more engines in       │
+│   worker/src/engines/)                  │
 └─────────────────────────────────────────┘
 ```
 
@@ -332,6 +341,11 @@ cd backend && npm run lint          # tsc --noEmit
 cd backend && npm run test          # Jest
 cd backend && npm run seed          # Run seed script
 
+# Worker
+cd worker && npm run dev            # Start with tsx watch (polls for scans)
+cd worker && npm run build          # TypeScript compile
+cd worker && npm run lint           # tsc --noEmit
+
 # Database
 cd backend && npx prisma migrate dev    # Run migrations
 cd backend && npx prisma generate       # Generate Prisma client
@@ -434,3 +448,5 @@ docker-compose up -d                # Start all services (DB + monitoring)
 8. **Zod v4 on backend, Zod v3 on frontend**: Be aware of version differences when sharing validation logic.
 9. **Vite proxy**: Dev server proxies `/api` and `/socket.io` to `localhost:3000` — no CORS issues in development.
 10. **Manual chunks**: Vite build splits bundles by library (charts, motion, icons, query, radix) — be mindful of chunk sizes when adding large dependencies.
+11. **Worker architecture**: Threat scanning runs in a separate `worker/` process. The backend creates scan records (status=PENDING), the worker polls for pending jobs, runs the appropriate engine, and updates results. Add new scan engines in `worker/src/engines/` implementing the `ScanEngine` interface.
+12. **ThreatCheck engines are pluggable**: To add a new engine, create a file in `worker/src/engines/` that exports a `ScanEngine` object, then register it in `worker/src/index.ts`. The engine interface is: `{ name: string, type: string, scan(job: ScanJob): Promise<ScanResult> }`.

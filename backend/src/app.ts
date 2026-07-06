@@ -69,6 +69,7 @@ import { devopsAlertsRouter } from "./routes/devops-alerts.routes";
 import { devopsLogSourcesRouter } from "./routes/devops-log-sources.routes";
 import { pipelinesRouter } from "./routes/pipelines.routes";
 import { publicRouter } from "./routes/public.routes";
+import { threatcheckRouter } from "./routes/threatcheck.routes";
 import { errorHandler, notFound } from "./middleware/error.middleware";
 import { logger } from "./utils/logger";
 
@@ -174,6 +175,7 @@ export function createApp() {
   app.use("/api/devops/log-sources", devopsLogSourcesRouter);
   app.use("/api/pipelines", pipelinesRouter);
   app.use("/api/public", publicRouter);
+  app.use("/api/threatcheck", threatcheckRouter);
 
   app.use(notFound);
   app.use(errorHandler);

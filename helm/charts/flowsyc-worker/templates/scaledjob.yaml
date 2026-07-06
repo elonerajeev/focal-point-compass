@@ -1,0 +1,56 @@
+{{- if eq .Values.mode "scaledjob" -}}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: {{ include "flowsyc-worker.fullname" . }}
+  labels: {{ include "flowsyc-worker.labels" . | nindent 4 }}
+spec:
+  pollingInterval: {{ .Values.scaledJob.pollingInterval }}
+  cooldownPeriod: {{ .Values.scaledJob.cooldownPeriod }}
+  minReplicaCount: {{ .Values.scaledJob.minReplicaCount }}
+  maxReplicaCount: {{ .Values.scaledJob.maxReplicaCount }}
+  successfulJobsHistoryLimit: {{ .Values.scaledJob.successfulJobsHistory }}
+  failedJobsHistoryLimit: {{ .Values.scaledJob.failedJobsHistory }}
+  triggers:
+  - type: azure-queue
+    metadata:
+      queueName: {{ .Values.scaledJob.queueName }}
+      connectionFromEnv: QUEUE_CONNECTION_STRING
+  jobTargetRef:
+    parallelism: 1
+    completions: 1
+    backoffLimit: {{ .Values.job.backoffLimit }}
+    ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
+    template:
+      spec:
+        serviceAccountName: {{ include "flowsyc-worker.fullname" . }}
+        restartPolicy: Never
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          fsGroup: 1001
+        containers:
+        - name: scanner
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: QUEUE_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.scaledJob.queueConnectionSecret }}
+                key: QUEUE_CONNECTION_STRING
+{{- range $key, $val := .Values.scaledJob.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+{{- end }}
+{{- range $key, $val := .Values.env }}
+{{- if kindIs "map" $val }}
+          - name: {{ $key }}
+{{ toYaml $val | nindent 12 }}
+{{- else }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+{{- end }}
+{{- end }}
+          resources: {{ toYaml .Values.job.resources | nindent 10 }}
+{{- end -}}

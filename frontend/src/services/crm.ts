@@ -37,6 +37,8 @@ import type {
   TeamRecord,
   TeamMemberRecord,
   ThemePreview,
+  ThreatScanRecord,
+  CreateScanInput,
 } from "@/types/crm";
 
 async function fetchApi<T>(endpoint: string): Promise<T> {
@@ -928,6 +930,30 @@ export const crmService = {
   },
   getUnreadNotificationCount: () =>
     requestJson<{ count: number }>("/notifications/unread-count"),
+
+  // ─── ThreatCheck Security Scanning ────────────────────────────────────
+  getThreatScans: (params?: { page?: number; limit?: number; type?: string; status?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", String(params.page));
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.type) query.set("type", params.type);
+    if (params?.status) query.set("status", params.status);
+    return requestJson<{
+      data: ThreatScanRecord[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/threatcheck?${query.toString()}`);
+  },
+  getThreatScan: (id: number) =>
+    requestJson<{ data: ThreatScanRecord }>(`/threatcheck/${id}`),
+  createThreatScan: (input: CreateScanInput) =>
+    persistApi<{ data: ThreatScanRecord }>("/threatcheck", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  deleteThreatScan: (id: number) =>
+    persistApi<{ success: boolean }>(`/threatcheck/${id}`, {
+      method: "DELETE",
+    }),
   markNotificationRead: (id: number) =>
     persistApi<{ success: boolean }>(`/notifications/${id}/read`, {
       method: "PATCH",

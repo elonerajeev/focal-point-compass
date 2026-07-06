@@ -1,0 +1,47 @@
+replicaCount: 2
+
+image:
+  repository: flowsyc/frontend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  host: flowsyc.local
+  tls:
+    enabled: false
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+
+env:
+  VITE_API_BASE_URL: /api
+  VITE_SOCKET_URL: ""
+  VITE_USE_REMOTE_API: "true"
+
+probe:
+  enabled: true
+  path: /
+
+serviceAccount:
+  create: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

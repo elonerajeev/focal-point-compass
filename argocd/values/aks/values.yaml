@@ -1,0 +1,45 @@
+global:
+  environment: production
+  imagePullPolicy: Always
+  imageTag: latest
+
+backend:
+  replicaCount: 3
+  image:
+    repository: your-acr.azurecr.io/flowsyc/backend
+  ingress:
+    host: api.threatcheck.ai
+    tls:
+      enabled: true
+  hpa:
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: your-acr.azurecr.io/flowsyc/frontend
+  ingress:
+    host: app.threatcheck.ai
+    tls:
+      enabled: true
+
+worker:
+  image:
+    repository: your-acr.azurecr.io/flowsyc/worker
+  scaledJob:
+    queueName: scan-queue
+    queueConnectionSecret: flowsyc-worker-secrets
+  job:
+    resources:
+      limits:
+        cpu: 2
+        memory: 2Gi
+      requests:
+        cpu: 1
+        memory: 1Gi
+
+namespaceProvisioner:
+  image:
+    repository: your-acr.azurecr.io/flowsyc/namespace-provisioner

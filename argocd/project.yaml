@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: flowsyc
+  namespace: argocd
+spec:
+  description: Flowsyc CRM — Shared services namespace
+  sourceRepos:
+  - '*'
+  destinations:
+  - namespace: flowsyc
+    server: https://kubernetes.default.svc
+  - namespace: tenant-*
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  roles:
+  - name: admin
+    policies:
+    - p, proj:flowsyc:admin, applications, *, flowsyc/*, allow
+    groups:
+    - flowsyc-admins
+  orphanedResources:
+    warn: false

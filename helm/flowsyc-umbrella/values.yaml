@@ -1,0 +1,56 @@
+global:
+  environment: development
+  imageTag: latest
+  imagePullPolicy: IfNotPresent
+  argocd:
+    enabled: false
+
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: flowsyc/backend
+    tag: "{{ .Values.global.imageTag }}"
+    pullPolicy: "{{ .Values.global.imagePullPolicy }}"
+  ingress:
+    enabled: true
+    className: nginx
+    host: flowsyc.local
+  env:
+    NODE_ENV: "{{ .Values.global.environment }}"
+
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: flowsyc/frontend
+    tag: "{{ .Values.global.imageTag }}"
+    pullPolicy: "{{ .Values.global.imagePullPolicy }}"
+  ingress:
+    enabled: true
+    className: nginx
+    host: flowsyc.local
+
+worker:
+  enabled: true
+  mode: scaledjob
+  image:
+    repository: flowsyc/worker
+    tag: "{{ .Values.global.imageTag }}"
+    pullPolicy: "{{ .Values.global.imagePullPolicy }}"
+  scaledJob:
+    queueName: scan-queue
+    queueConnectionSecret: flowsyc-worker-secrets
+  env:
+    DATABASE_URL:
+      valueFrom:
+        secretKeyRef:
+          name: flowsyc-worker-secrets
+          key: DATABASE_URL
+
+namespaceProvisioner:
+  enabled: true
+  image:
+    repository: flowsyc/namespace-provisioner
+    tag: "{{ .Values.global.imageTag }}"
+    pullPolicy: "{{ .Values.global.imagePullPolicy }}"

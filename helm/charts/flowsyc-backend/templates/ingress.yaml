@@ -1,0 +1,39 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "flowsyc-backend.fullname" . }}
+  labels: {{ include "flowsyc-backend.labels" . | nindent 4 }}
+  annotations:
+    {{- if .Values.ingress.className }}
+    kubernetes.io/ingress.class: {{ .Values.ingress.className }}
+    {{- end }}
+    {{- if .Values.ingress.tls.enabled }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    {{- end }}
+spec:
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "flowsyc-backend.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+      - path: /socket.io
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "flowsyc-backend.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.host }}
+    secretName: {{ include "flowsyc-backend.fullname" . }}-tls
+  {{- end }}
+{{- end -}}

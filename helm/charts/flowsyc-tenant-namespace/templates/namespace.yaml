@@ -1,0 +1,27 @@
+{{- $ns := .Values.namespace.name | default (printf "tenant-%s" .Values.orgId) -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $ns }}
+  labels:
+{{ toYaml .Values.labels | nindent 4 }}
+    flowsyc.io/org-id: {{ .Values.orgId }}
+    flowsyc.io/plan: {{ .Values.plan }}
+    flowsyc.io/tenant-name: {{ .Values.tenantName | default .Values.orgId | quote }}
+  annotations:
+    flowsyc.io/provisioned-at: {{ now | date "2006-01-02T15:04:05Z" | quote }}
+---
+{{- $quota := index .Values.resourceQuota .Values.plan | default .Values.resourceQuota.free -}}
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: scan-quota
+  namespace: {{ $ns }}
+spec:
+  hard:
+    requests.cpu: {{ $quota.cpu }}
+    requests.memory: {{ $quota.memory }}
+    limits.cpu: {{ $quota.cpu }}
+    limits.memory: {{ $quota.memory }}
+    count/jobs.batch: {{ $quota.jobs | default 5 }}
+    pods: {{ $quota.pods | default 10 }}

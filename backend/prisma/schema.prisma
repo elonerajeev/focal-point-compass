@@ -848,8 +848,31 @@ model Team {
   deletedAt      DateTime?
 
   @@index([organizationId])
-  @@index([ownerEmail])
   @@index([deletedAt])
+}
+
+model ThreatScan {
+  id             Int      @id @default(autoincrement())
+  type           String   // "DEPENDENCY" | "DOCKER"
+  target         String   // package name "express@4.18.2" or docker image "node:18-alpine"
+  status         String   @default("PENDING") // "PENDING" | "RUNNING" | "COMPLETED" | "FAILED"
+  summary        Json?    // { total, critical, high, medium, low }
+  results        Json?    // array of vulnerability findings
+  error          String?
+  packageJson    String?  // raw package.json content for dependency scans
+  report         String?  // human-readable scan report text
+  organizationId String?  // multi-tenant isolation per K8s namespace
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("threat_scans")
 }
 
 // ============================================

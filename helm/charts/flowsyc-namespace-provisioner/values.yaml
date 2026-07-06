@@ -1,0 +1,34 @@
+replicaCount: 1
+
+image:
+  repository: flowsyc/namespace-provisioner
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+env:
+  HELM_CHART_PATH: /helm/charts/flowsyc-tenant-namespace
+  DEFAULT_PLAN: free
+  LOG_LEVEL: info
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+rbac:
+  create: true
+  clusterRole: true
+  namespaces:
+  - "tenant-*"
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}

@@ -1,0 +1,39 @@
+{{- if eq .Values.mode "deployment" -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flowsyc-worker.fullname" . }}
+  labels: {{ include "flowsyc-worker.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "flowsyc-worker.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels: {{ include "flowsyc-worker.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "flowsyc-worker.fullname" . }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: worker
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: WORKER_MODE
+          value: poll
+{{- range $key, $val := .Values.env }}
+{{- if kindIs "map" $val }}
+        - name: {{ $key }}
+{{ toYaml $val | nindent 10 }}
+{{- else }}
+        - name: {{ $key }}
+          value: {{ $val | quote }}
+{{- end }}
+{{- end }}
+        resources: {{ toYaml .Values.deployment.resources | nindent 10 }}
+{{- end -}}

@@ -1,0 +1,97 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flowsyc
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: flowsyc
+  source:
+    repoURL: https://github.com/elonerajeev/flowsyc.git
+    targetRevision: HEAD
+    path: helm/charts/flowsyc-backend
+    helm:
+      valueFiles:
+      - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: flowsyc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flowsyc-frontend
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: flowsyc
+  source:
+    repoURL: https://github.com/elonerajeev/flowsyc.git
+    targetRevision: HEAD
+    path: helm/charts/flowsyc-frontend
+    helm:
+      valueFiles:
+      - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: flowsyc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flowsyc-worker
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: flowsyc
+  source:
+    repoURL: https://github.com/elonerajeev/flowsyc.git
+    targetRevision: HEAD
+    path: helm/charts/flowsyc-worker
+    helm:
+      valueFiles:
+      - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: flowsyc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: flowsyc-namespace-provisioner
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: flowsyc
+  source:
+    repoURL: https://github.com/elonerajeev/flowsyc.git
+    targetRevision: HEAD
+    path: helm/charts/flowsyc-namespace-provisioner
+    helm:
+      valueFiles:
+      - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: flowsyc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: flowsyc-worker
+description: Flowsyc ThreatCheck Worker (scan job executor)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - crm
+  - flowsyc
+  - worker
+  - threatcheck
+  - scanner

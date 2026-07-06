@@ -622,3 +622,45 @@ export interface ActivityRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ThreatScanRecord {
+  id: number;
+  type: "DEPENDENCY" | "DOCKER";
+  target: string;
+  status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+  summary: {
+    total: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  } | null;
+  results: Array<{
+    id: string;
+    package: string;
+    severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+    title: string;
+    description: string;
+    fixedIn?: string;
+    url?: string;
+  }> | null;
+  error: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdById: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDependencyScanInput {
+  type: "DEPENDENCY";
+  target: string;
+  packageJson?: string;
+}
+
+export interface CreateDockerScanInput {
+  type: "DOCKER";
+  target: string;
+}
+
+export type CreateScanInput = CreateDependencyScanInput | CreateDockerScanInput;

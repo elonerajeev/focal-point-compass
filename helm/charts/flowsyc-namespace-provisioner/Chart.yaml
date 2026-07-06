@@ -1,0 +1,11 @@
+apiVersion: v2
+name: flowsyc-namespace-provisioner
+description: Creates per-tenant K8s namespaces on demand via Helm
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - flowsyc
+  - namespace
+  - provisioner
+  - tenant

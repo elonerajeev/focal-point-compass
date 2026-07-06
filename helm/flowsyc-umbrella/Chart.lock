@@ -1,0 +1,15 @@
+dependencies:
+- name: flowsyc-backend
+  repository: file://../charts/flowsyc-backend
+  version: 0.1.0
+- name: flowsyc-frontend
+  repository: file://../charts/flowsyc-frontend
+  version: 0.1.0
+- name: flowsyc-worker
+  repository: file://../charts/flowsyc-worker
+  version: 0.1.0
+- name: flowsyc-namespace-provisioner
+  repository: file://../charts/flowsyc-namespace-provisioner
+  version: 0.1.0
+digest: sha256:aa135f2bf5d7acd71bb6315bcc0ae02e520249ae3bed035a521818e494eb502a
+generated: "2026-07-06T12:17:51.64650616+05:30"

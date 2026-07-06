@@ -1,0 +1,73 @@
+replicaCount: 2
+
+image:
+  repository: flowsyc/backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+ingress:
+  enabled: true
+  className: nginx
+  host: flowsyc.local
+  tls:
+    enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+env:
+  NODE_ENV: production
+  PORT: "3000"
+  FRONTEND_URL: http://flowsyc.local
+  DATABASE_URL:
+    valueFrom:
+      secretKeyRef:
+        name: flowsyc-backend-secrets
+        key: DATABASE_URL
+  JWT_ACCESS_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: flowsyc-backend-secrets
+        key: JWT_ACCESS_SECRET
+  JWT_REFRESH_SECRET:
+    valueFrom:
+      secretKeyRef:
+        name: flowsyc-backend-secrets
+        key: JWT_REFRESH_SECRET
+  VALKEY_URL:
+    valueFrom:
+      secretKeyRef:
+        name: flowsyc-backend-secrets
+        key: VALKEY_URL
+
+probe:
+  enabled: true
+  path: /api/health
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
